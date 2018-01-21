@@ -2,9 +2,14 @@
 
 # See README.md for details
 
+import datetime
+import os
+import picamera
+import re
 import select
 import sys
 import time
+import yaml
 
 try:
     import RPi.GPIO as GPIO
@@ -24,11 +29,35 @@ pin_brightness = 5  # 29
 pin_lamp_left  = 6  # 31
 pin_lamp_right = 13 # 33
 
-lamp_delay = 0.01
-motor_delay = 0.01
-main_loop_delay = 1.0
+# This is overwritten from /etc/noticeboard.conf if it's available
+config = {
+    'delays': {
+        'lamp': 0.01,
+        'motor': 0.01,
+        'main_loop': 1.0,
+        'activation': 2.0},
+    'expected_occupancy': {
+        # default for a 9-5 worker who stays in at weekends
+        'Monday': ["06:00--08:30",
+                   "17:30--23:30"],
+        'Tuesday': ["06:00--08:30",
+                    "17:30--23:30"],
+        'Wednesday': ["06:00--08:30",
+                      "17:30--23:30"],
+        'Thursday': ["06:00--08:30",
+                     "17:30--23:30"],
+        'Friday': ["06:00--08:30",
+                   "17:30--23:30"],
+        'Saturday': ["08:00--23:30"],
+        'Sunday': ["08:00--23:30"]},
+    'camera': {
+        'duration': 180,
+        'directory': "/var/spool/camera"},
+    'pir_log_file': "/var/log/pir"
+}
 
 pwm = None
+camera = None
 
 def power_on():
     GPIO.output(pin_psu, GPIO.HIGH.LOW)
@@ -39,6 +68,9 @@ def power_off():
 last_brightness = 0
 
 def lamps(brightness, fade, left, right):
+    """Set lamp brightness.
+Left and right lamps can be turned on and off separately, but the
+brightness must be the same."""
     if brightness > 0 and (left or right):
         power_on()
         GPIO.output(pin_lamp_left, GPIO.HIGH if left else GPIO.LOW)
@@ -48,12 +80,12 @@ def lamps(brightness, fade, left, right):
             if step > 0:
                 while last_brightness < brightness:
                     pwm.ChangeDutyCycle(pin_brightness, last_brightness)
-                    time.sleep(lamp_delay)
+                    time.sleep(config['delays']['lamp'])
                     last_brightness += step
             else:
                 while last_brightness > brightness:
                     pwm.ChangeDutyCycle(pin_brightness, last_brightness)
-                    time.sleep(lamp_delay)
+                    time.sleep(config['delays']['lamp'])
                     last_brightness += step
         else:
             pwm.ChangeDutyCycle(pin_brightness, brightness)
@@ -75,7 +107,7 @@ def extend():
         GPIO.output(pin_motor_a, GPIO.LOW)
         GPIO.output(pin_motor_b, GPIO.HIGH)
         while not GPIO.input(pin_extended):
-            time.sleep(motor_delay)
+            time.sleep(config['delays']['motor'])
         GPIO.output(pin_motor_b, GPIO.LOW)
 
 def retract():
@@ -83,8 +115,43 @@ def retract():
         GPIO.output(pin_motor_b, GPIO.LOW)
         GPIO.output(pin_motor_a, GPIO.HIGH)
         while not GPIO.input(pin_extended):
-            time.sleep(motor_delay)
+            time.sleep(config['delays']['motor'])
         GPIO.output(pin_motor_a, GPIO.LOW)
+
+def convert_interval(interval_string):
+    matched = re.match("\\([0-2][0-9]\\):\\([0-5][0-9]\\)--\\([0-2][0-9]\\):\\([0-5][0-9]\\)", interval_string)
+    return (((int(matched.group(1))*60 + int(matched.group(2))),
+             (int(matched.group(3))*60 + int(matched.group(4))))
+            if matched
+            else None)
+
+def expected_at_home():
+    """Return whether there is anyone expected to be in the house."""
+    # todo: use key-hook sensor
+    # todo: see whether desktop computer is responding
+    # todo: see whether users' phone is in range
+    when = datetime.datetime.now()
+    what_time = when.hour() * 60 + when.minute()
+    for interval in expected_at_home_times[['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][when.weekday()]]:
+        if what_time >= interval[0] and what_time <= interval[1]:
+            return True
+    return False
+
+photographing_duration = None
+photographing = False
+
+def handle_possible_intruder():
+    global photographing
+    when = datetime.datetime.now()
+    photographing = when + photographing_duration
+    with open(config['pir_log_file'], 'w+') as logfile:
+        logfile.write(datetime.datetime.now().isoformat() + "\n")
+    # todo: send a remote notification e.g. email with the picture
+
+def take_photo():
+    image_filename = os.path.join(config['camera']['directory'], datetime.datetime.now().isoformat()+".jpg")
+    camera.capture(image_filename)
+    # todo: compare with previous photo in series, and drop any that are very nearly the same
 
 actions = {
     "on": power_on,
@@ -95,10 +162,33 @@ actions = {
     "quench", quench
     }
 
-activation_delay = 2.0
+# based on https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+def rec_update(d, u, i=""):
+    for k, v in u.iteritems():
+        if isinstance(v, dict):
+            d[k] = rec_update(d.get(k, {}), v, "  ")
+        elif isinstance(v, list):
+            d[k] = d.get(k, []) + [(ve if ve != 'None' else None) for ve in v]
+        elif v == 'None':
+            d[k] = None
+        else:
+            d[k] = v
+    return d
 
 def main():
-    global pwm
+    config_file_name = "/etc/noticeboard.conf"
+    if os.path.isfile(config_file_name):
+        with open(os.path.expanduser(os.path.expandvars(config_file_name))) as config_file:
+            more_config = yaml.safe_load(config_file)
+            rec_update(config, more_config)
+    global expected_at_home_times
+    expected_at_home_times = { day: [convert_interval(interval_string)
+                                     for interval_string in interval_string_list]
+                               for day, interval_string_list in config['expected_occupancy'].iteritems()}
+    global photographing_duration
+    photographing_duration = datetime.timedelta(0, config['camera']['duration'])
+    global camera
+    camera = picamera.PiCamera()
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(pin_pir, GPIO.IN)
     GPIO.setup(pin_retracted, GPIO.IN)
@@ -107,10 +197,13 @@ def main():
     GPIO.setup(pin_motor_a, GPIO.OUT, initial=GPIO.LOW)
     GPIO.setup(pin_motor_b, GPIO.OUT, initial=GPIO.LOW)
     GPIO.setup(pin_brightness, GPIO.OUT, initial=GPIO.LOW)
+    global pwm
     pwm = GPIO.PWM(pin_brightness, 1000)
     GPIO.setup(pin_lamp_left, GPIO.OUT, initial=GPIO.LOW)
     GPIO.setup(pin_lamp_right, GPIO.OUT, initial=GPIO.LOW)
     pir_seen_at = None
+    main_loop_delay = config['delays']['main_loop']
+    activation_delay = config['delays']['activation']
     while True:
         ready, _, _ = select.select([sys.stdin], [], [], main_loop_delay)
         if sys.stdin in ready:
@@ -123,12 +216,19 @@ def main():
             if pir_seen_at:
                 if time.time() > pir_seen_at + activation_delay:
                     print "(pir_triggered)"
-                    extend()
-                    shine()
+                    if expected_at_home():
+                        extend()
+                        shine()
+                    else:
+                        handle_possible_intruder()
             else:
                 pir_seen_at = time.time()
         else:
             pir_seen_at = None
+        if photographing:
+            take_photo()
+            if datetime.datetime.now() >= photographing:
+                photographing = False
 
 if __name__ == "__main__":
     main()
