@@ -54,3 +54,14 @@
   |    |---- gate   (connect to load)
    \---|
 
+** Audio amp pinout
+
+   |---+-------------|
+   |---+-------------|
+   |   | power +5v   |
+   |   | speaker -ve |
+   |   | speaker +ve |
+   |   | come -ve    |
+   |   | in          |
+   |   | mute        |
+   |---+-------------|
