@@ -96,13 +96,16 @@ brightness must be the same."""
         pwm.ChangeDutyCycle(pin_brightness, 0)
 
 def shine():
+    """Switch the lamps on."""
     power_on()
     lamps(100, True, True, True)
 
 def quench():
+    """Switch the lamps off."""
     lamps(0, True, True, True)
 
 def extend():
+    """Slide the keyboard drawer out."""
     if not GPIO.input(pin_extended):
         GPIO.output(pin_motor_a, GPIO.LOW)
         GPIO.output(pin_motor_b, GPIO.HIGH)
@@ -111,6 +114,7 @@ def extend():
         GPIO.output(pin_motor_b, GPIO.LOW)
 
 def retract():
+    """Slide the keyboard drawer back in."""
     if not GPIO.input(pin_extended):
         GPIO.output(pin_motor_b, GPIO.LOW)
         GPIO.output(pin_motor_a, GPIO.HIGH)
@@ -118,7 +122,18 @@ def retract():
             time.sleep(config['delays']['motor'])
         GPIO.output(pin_motor_a, GPIO.LOW)
 
+def report():
+    PIR_active = GPIO.input(pin_pir)
+    keyboard_extended = GPIO.input(pin_extended)
+    keyboard_retracted = GPIO.input(pin_retracted)
+    print "PIR:", PIR_active
+    print "Keyboard extended:", keyboard_extended
+    print "keyboard retracted:", keyboard_retracted
+    print "expected_at_home():", expected_at_home()
+
 def convert_interval(interval_string):
+    """Convert a string giving start and end times into a tuple.
+    For the input "07:30--09:15" the output would be (450, 555)."""
     matched = re.match("\\([0-2][0-9]\\):\\([0-5][0-9]\\)--\\([0-2][0-9]\\):\\([0-5][0-9]\\)", interval_string)
     return (((int(matched.group(1))*60 + int(matched.group(2))),
              (int(matched.group(3))*60 + int(matched.group(4))))
@@ -141,6 +156,7 @@ photographing_duration = None
 photographing = False
 
 def handle_possible_intruder():
+    """Actions to be taken when the PIR detects someone when no-one is expected to be in the house."""
     global photographing
     when = datetime.datetime.now()
     photographing = when + photographing_duration
@@ -149,6 +165,7 @@ def handle_possible_intruder():
     # todo: send a remote notification e.g. email with the picture
 
 def take_photo():
+    """Capture a photo and store it with a timestamp in the filename."""
     image_filename = os.path.join(config['camera']['directory'], datetime.datetime.now().isoformat()+".jpg")
     camera.capture(image_filename)
     # todo: compare with previous photo in series, and drop any that are very nearly the same
@@ -157,9 +174,10 @@ actions = {
     "on": power_on,
     "off": power_off,
     "extend": extend,
-    "retract", retract,
-    "shine", shine,
-    "quench", quench
+    "retract": retract,
+    "shine": shine,
+    "quench": quench,
+    "report": report
     }
 
 # based on https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
@@ -176,6 +194,8 @@ def rec_update(d, u, i=""):
     return d
 
 def main():
+    """Interface to the hardware of my noticeboard.
+    This is meant for my noticeboard Emacs software to send commands to."""
     config_file_name = "/etc/noticeboard.conf"
     if os.path.isfile(config_file_name):
         with open(os.path.expanduser(os.path.expandvars(config_file_name))) as config_file:
