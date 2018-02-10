@@ -205,6 +205,7 @@ def main():
     expected_at_home_times = { day: [convert_interval(interval_string)
                                      for interval_string in interval_string_list]
                                for day, interval_string_list in config['expected_occupancy'].iteritems()}
+    global photographing
     global photographing_duration
     photographing_duration = datetime.timedelta(0, config['camera']['duration'])
     global camera
