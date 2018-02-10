@@ -146,7 +146,7 @@ def expected_at_home():
     # todo: see whether desktop computer is responding
     # todo: see whether users' phone is in range
     when = datetime.datetime.now()
-    what_time = when.hour() * 60 + when.minute()
+    what_time = when.hour * 60 + when.minute
     for interval in expected_at_home_times[['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][when.weekday()]]:
         if what_time >= interval[0] and what_time <= interval[1]:
             return True
