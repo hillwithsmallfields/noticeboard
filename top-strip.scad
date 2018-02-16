@@ -20,6 +20,8 @@ arch_inner = 28;
 
 arch_half = (height + arch_inner) / 2;
 
+all = false;
+
 module notch() {
      translate([-thickness/2,0]) square([thickness, notch_height]);
 }
@@ -80,6 +82,7 @@ inset = 5 + thickness;
 bracket_back_height = height;
 
 module bracket() {
+     board_backing_frame_depth = board_frame_depth * 2;
      union() {
 	  /* the part overhanging the edge of the board */
 	  intersection() {
@@ -94,7 +97,7 @@ module bracket() {
 	       square([bracket_height, bracket_height]);
 	  }
 	  /* the back diagonal */
-	  translate([bracket_height*2 + board_frame_depth, 0]) {
+	  translate([bracket_height*2 + board_backing_frame_depth, 0]) {
 	       intersection() {
 		    rotate([0,0,45]) translate([-height, 0])
 			 square([height,height]);
@@ -104,12 +107,12 @@ module bracket() {
 	  }
 	  /* the horizontal piece at the top */
 	  translate([bracket_height, 0])
-	       square([board_frame_depth, bracket_height]);
+	       square([board_backing_frame_depth, bracket_height]);
 	  /* going down behind the board edging */
-	  translate([bracket_height+board_frame_depth, - board_frame_depth])
+	  translate([bracket_height+board_backing_frame_depth, - board_frame_depth])
 	       square([bracket_height, board_frame_depth]);
 	  /* the vertical part at the back */
-	  translate([bracket_height+board_frame_depth + inset, - (board_frame_depth + height)]) {
+	  translate([bracket_height+board_backing_frame_depth + inset, - (board_frame_depth + height)]) {
 	       difference() {
 		    square([bracket_height - inset, bracket_back_height]);
 		    translate([0,bracket_back_height-(thickness/2)]) rotate([0,0,-90]) notch();
@@ -157,34 +160,40 @@ module slide_in_surround() {
      }
 }
 
-frontage();
-translate([310,140]) rotate([0,180,90]) bracket();
-translate([35, 28]) rotate([0,0,90]) bracket();
-translate([50,120]) lamp_support_arch();
-translate([220,90]) lamp_support_arch();
-translate([135,52]) rotate([0,0,90]) {
-     slide_in_surround();
-     translate([0, slide_in_margin]) slide_in_plate(-.5);
-}
-translate([167,52]) rotate([0,0,90]) {
-     slide_in_surround();
-     translate([0, slide_in_margin]) slide_in_plate(-.5);
-}
-translate([49,51]) {
-      slide_in_cover();
-}
-translate([110,110]) {
-      slide_in_cover();
-}
-translate([184,70]) {
-     for (i = [0:2]) {
-	  translate([(bracer_height*2+1)*i, 0]) bracer();
+if (all) {
+     frontage();
+     translate([310,140]) rotate([0,180,90]) bracket();
+     translate([35, 28]) rotate([0,0,90]) bracket();
+     translate([50,120]) lamp_support_arch();
+     translate([220,90]) lamp_support_arch();
+     translate([135,52]) rotate([0,0,90]) {
+          slide_in_surround();
+          translate([0, slide_in_margin]) slide_in_plate(-.5);
      }
-}
-translate([184,52]) {
-     for (i = [0:3]) {
-	  translate([(bracer_height*2+1)*i, 0]) bracer();
+     translate([167,52]) rotate([0,0,90]) {
+          slide_in_surround();
+          translate([0, slide_in_margin]) slide_in_plate(-.5);
      }
+     translate([49,51]) {
+          slide_in_cover();
+     }
+     translate([110,110]) {
+          slide_in_cover();
+     }
+     translate([184,70]) {
+          for (i = [0:2]) {
+               translate([(bracer_height*2+1)*i, 0]) bracer();
+          }
+     }
+     translate([184,52]) {
+          for (i = [0:3]) {
+               translate([(bracer_height*2+1)*i, 0]) bracer();
+          }
+     }
+     translate([220,90]) bracer();
+} else {
+     // bracer();
+     // lamp_support_arch();
+     // frontage();
+     bracket();
 }
-translate([220,90]) bracer();
-
