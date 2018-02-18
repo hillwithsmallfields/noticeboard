@@ -82,7 +82,7 @@ inset = 5 + thickness;
 bracket_back_height = height;
 
 module bracket() {
-     board_backing_frame_depth = board_frame_depth * 2;
+     board_backing_frame_depth = (board_frame_depth * 2) + 5;
      union() {
 	  /* the part overhanging the edge of the board */
 	  intersection() {
@@ -112,9 +112,9 @@ module bracket() {
 	  translate([bracket_height+board_backing_frame_depth, - board_frame_depth])
 	       square([bracket_height, board_frame_depth]);
 	  /* the vertical part at the back */
-	  translate([bracket_height+board_backing_frame_depth + inset, - (board_frame_depth + height)]) {
+	  translate([bracket_height+board_backing_frame_depth, - (board_frame_depth + height)]) {
 	       difference() {
-		    square([bracket_height - inset, bracket_back_height]);
+		    square([bracket_height, bracket_back_height]);
 		    translate([0,bracket_back_height-(thickness/2)]) rotate([0,0,-90]) notch();
 	       }
 	  }
