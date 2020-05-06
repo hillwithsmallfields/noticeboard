@@ -96,7 +96,7 @@ brightness must be the same."""
                     print last_brightness
                     pwm.ChangeDutyCycle(last_brightness)
                     time.sleep(fade_delay)
-                    last_brightness += step
+                    last_brightness -= step
         else:
             pwm.ChangeDutyCycle(brightness)
     else:
