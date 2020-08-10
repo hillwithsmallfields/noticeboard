@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # Program for my noticeboard hardware
 
 # See README.md for details
@@ -14,7 +16,7 @@ import yaml
 try:
     import RPi.GPIO as GPIO
 except RuntimeError:
-    print "Error importing RPi.GPIO!"
+    print("Error importing RPi.GPIO!")
 
 # Pin          BCM  Board
 # input pins        #
@@ -61,12 +63,12 @@ camera = None
 
 def power_on():
     """Switch the 12V power on."""
-    print "switching 12V power on"
+    print("switching 12V power on")
     GPIO.output(pin_psu, GPIO.LOW)
 
 def power_off():
     """Switch the 12V power off."""
-    print "switching 12V power off"
+    print("switching 12V power off")
     GPIO.output(pin_psu, GPIO.HIGH)
 
 last_brightness = 0
@@ -76,7 +78,7 @@ def lamps(brightness, fade, left, right):
 Left and right lamps can be turned on and off separately, but the
 brightness must be the same."""
     global last_brightness
-    print "lamps", left, right, "to brightness", brightness, "from last_brightness", last_brightness, "with fade", fade
+    print("lamps", left, right, "to brightness", brightness, "from last_brightness", last_brightness, "with fade", fade)
     if brightness > 0 and (left or right):
         power_on()
         GPIO.output(pin_lamp_left, GPIO.HIGH if left else GPIO.LOW)
@@ -84,16 +86,16 @@ brightness must be the same."""
         if fade and brightness != last_brightness:
             fade_delay = config['delays']['lamp']
             step = (brightness - last_brightness) / 10
-            print "changing brightness from", last_brightness, "to", brightness, "in steps of", step, "at interval", fade_delay
+x            print("changing brightness from", last_brightness, "to", brightness, "in steps of", step, "at interval", fade_delay)
             if step > 0:
                 while last_brightness < brightness:
-                    print last_brightness
+                    print(last_brightness)
                     pwm.ChangeDutyCycle(last_brightness)
                     time.sleep(fade_delay)
                     last_brightness += step
             else:
                 while last_brightness > brightness:
-                    print last_brightness
+                    print(last_brightness)
                     pwm.ChangeDutyCycle(last_brightness)
                     time.sleep(fade_delay)
                     last_brightness -= step
@@ -108,30 +110,30 @@ brightness must be the same."""
 def shine():
     """Switch the lamps on."""
     power_on()
-    print "switching lamps on"
+    print("switching lamps on")
     lamps(100, True, True, True)
 
 def quench():
     """Switch the lamps off."""
-    print "switching lamps off"
+    print("switching lamps off")
     lamps(0, False, False, False)
 
 def extend():
     """Slide the keyboard drawer out."""
     if GPIO.input(pin_extended):
-        print "keyboard already extended"
+        print("keyboard already extended")
     else:
         power_on()
         step_time = config['delays']['motor']
         timeout = float(config['delays']['motor_timeout'])
         countdown = int(timeout / step_time)
-        print "extending keyboard in", countdown, step_time, "time steps"
+        print("extending keyboard in", countdown, step_time, "time steps")
         GPIO.output(pin_motor_a, GPIO.LOW)
         GPIO.output(pin_motor_b, GPIO.HIGH)
         while not GPIO.input(pin_extended):
             countdown -= 1
             if countdown <= 0:
-                print "timing out on keyboard motion"
+                print("timing out on keyboard motion")
                 break
             time.sleep(step_time)
         GPIO.output(pin_motor_b, GPIO.LOW)
@@ -139,19 +141,19 @@ def extend():
 def retract():
     """Slide the keyboard drawer back in."""
     if GPIO.input(pin_retracted):
-        print "keyboard already retracted"
+        print("keyboard already retracted")
     else:
         power_on()
         step_time = config['delays']['motor']
         timeout = float(config['delays']['motor_timeout'])
         countdown = int(timeout / step_time)
-        print "retracting keyboard in", countdown, step_time, "time steps"
+        print("retracting keyboard in", countdown, step_time, "time steps")
         GPIO.output(pin_motor_b, GPIO.LOW)
         GPIO.output(pin_motor_a, GPIO.HIGH)
         while not GPIO.input(pin_retracted):
             countdown -= 1
             if countdown <= 0:
-                print "timing out on keyboard motion"
+                print("timing out on keyboard motion")
                 break
             time.sleep(config['delays']['motor'])
         GPIO.output(pin_motor_a, GPIO.LOW)
@@ -182,11 +184,11 @@ def report():
     PIR_active = GPIO.input(pin_pir)
     keyboard_extended = GPIO.input(pin_extended)
     keyboard_retracted = GPIO.input(pin_retracted)
-    print "PIR:", PIR_active
-    print "Keyboard extended:", keyboard_extended
-    print "keyboard retracted:", keyboard_retracted
-    print "last_brightness", last_brightness
-    print "expected_at_home():", expected_at_home()
+    print("PIR:", PIR_active)
+    print("Keyboard extended:", keyboard_extended)
+    print("keyboard retracted:", keyboard_retracted)
+    print("last_brightness", last_brightness)
+    print("expected_at_home():", expected_at_home())
 
 def convert_interval(interval_string):
     """Convert a string giving start and end times into a tuple.
@@ -233,7 +235,7 @@ def handle_possible_intruder():
 def take_photo():
     """Capture a photo and store it with a timestamp in the filename."""
     image_filename = os.path.join(config['camera']['directory'], datetime.datetime.now().isoformat()+".jpg")
-    print "taking photo into", image_filename
+    print("taking photo into", image_filename)
     camera.capture(image_filename)
     # todo: compare with previous photo in series, and drop any that are very nearly the same
 
@@ -249,7 +251,7 @@ def show_help():
         docstring = actions[command_name].__doc__
         if docstring is None:
             docstring = "Undocumented"
-        print command_name + ' '*(maxlen - len(command_name)), docstring
+        print(command_name + ' '*(maxlen - len(command_name)), docstring)
     
 actions = {
     "auto": auto,
@@ -295,7 +297,7 @@ def main():
     expected_at_home_times = { day: [convert_interval(interval_string)
                                      for interval_string in interval_string_list]
                                for day, interval_string_list in config['expected_occupancy'].iteritems()}
-    print "noticeboard hardware controller starting"
+    print("noticeboard hardware controller starting")
     global photographing
     global photographing_duration
     photographing_duration = datetime.timedelta(0, config['camera']['duration'])
@@ -317,7 +319,7 @@ def main():
     pir_seen_at = None
     main_loop_delay = config['delays']['main_loop']
     activation_delay = config['delays']['activation']
-    print "noticeboard hardware controller started"
+    print("noticeboard hardware controller started")
     while running:
         ready, _, _ = select.select([sys.stdin], [], [], main_loop_delay)
         if sys.stdin in ready:
@@ -325,11 +327,11 @@ def main():
             if command in actions:
                 actions[command]()
             else:
-                print '(error "Unknown noticeboard command" ', command, ')'
+                print('(error "Unknown noticeboard command" ', command, ')')
         if enable_pir and GPIO.input(pin_pir):
             if pir_seen_at:
                 if time.time() > pir_seen_at + activation_delay:
-                    print "(pir_triggered)"
+                    print("(pir_triggered)")
                     if expected_at_home():
                         extend()
                         shine()
@@ -343,7 +345,7 @@ def main():
             take_photo()
             if datetime.datetime.now() >= photographing:
                 photographing = False
-    print "noticeboard hardware controller stopped"
+    print("noticeboard hardware controller stopped")
 
 if __name__ == "__main__":
     main()
