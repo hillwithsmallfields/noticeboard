@@ -271,7 +271,7 @@ actions = {
 
 # based on https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 def rec_update(d, u, i=""):
-    for k, v in u.iteritems():
+    for k, v in u.items():
         if isinstance(v, dict):
             d[k] = rec_update(d.get(k, {}), v, "  ")
         elif isinstance(v, list):
@@ -296,7 +296,7 @@ def main():
     global expected_at_home_times
     expected_at_home_times = { day: [convert_interval(interval_string)
                                      for interval_string in interval_string_list]
-                               for day, interval_string_list in config['expected_occupancy'].iteritems()}
+                               for day, interval_string_list in config['expected_occupancy'].items()}
     print("noticeboard hardware controller starting")
     global photographing
     global photographing_duration
