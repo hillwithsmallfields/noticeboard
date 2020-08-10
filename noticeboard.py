@@ -5,6 +5,7 @@
 # See README.md for details
 
 import datetime
+import functools
 import os
 import picamera
 import re
@@ -246,7 +247,7 @@ def quit_controller():
 
 def show_help():
     """List the commands."""
-    maxlen = 1 + reduce(max, map(len, actions.keys()))
+    maxlen = 1 + functools.reduce(max, map(len, actions.keys()))
     for command_name in sorted(actions.keys()):
         docstring = actions[command_name].__doc__
         if docstring is None:
