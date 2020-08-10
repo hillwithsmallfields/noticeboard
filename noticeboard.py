@@ -86,7 +86,7 @@ brightness must be the same."""
         if fade and brightness != last_brightness:
             fade_delay = config['delays']['lamp']
             step = (brightness - last_brightness) / 10
-x            print("changing brightness from", last_brightness, "to", brightness, "in steps of", step, "at interval", fade_delay)
+            print("changing brightness from", last_brightness, "to", brightness, "in steps of", step, "at interval", fade_delay)
             if step > 0:
                 while last_brightness < brightness:
                     print(last_brightness)
