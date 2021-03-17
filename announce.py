@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import calendar
 import csv
 import datetime
 import os
@@ -52,7 +53,7 @@ def announce_from_file(inputfile, args):
 def empty_queue(s):
     for event in s.queue():
         s.cancel(event)
-        
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--language', '-l',
@@ -61,9 +62,25 @@ def main():
     parser.add_argument('--engine', '-e',
                         default='espeak',
                         help="""The engine to use for Talkey""")
+    parser.add_argument("--verbose", "-v",
+                        action='store_true')
     parser.add_argument('inputfile')
     args = parser.parse_args()
-    announce_from_file(args.inputfile, args)
+    if os.path.isdir(args.inputfile):
+        for dayfile in [
+                calendar.day_name[datetime.datetime.now().weekday()],
+                calendar.day_name[datetime.datetime.now().weekday()].lower(),
+                "Timetable", "timetable", "Daily", "daily", "Default", "default"]:
+            dayfile = os.path.join(args.inputfile, dayfile + ".csv" )
+            if os.path.isfile(dayfile):
+                if args.verbose:
+                    print("Loading dayfile", dayfile)
+                announce_from_file(dayfile, args)
+                break
+    else:
+        if args.verbose:
+            print("Loading", args.inputfile)
+        announce_from_file(args.inputfile, args)
 
 if __name__ == '__main__':
     main()
