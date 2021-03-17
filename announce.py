@@ -9,51 +9,68 @@ import sched
 import talkey                   # https://pypi.org/project/talkey/
 import time
 
-LAST_READ = None
-FILE_NAME = None
-PROG_ARGS = None
-
 def sleep_timedelta(td):
     time.sleep(td.seconds if isinstance(td, datetime.timedelta) else td)
-
-def announce(tts, text):
+        
+def announce(announcer, text):
     print(text)
-    tts.say(text)
-    if os.stat(FILE_NAME).st_mtime > LAST_READ:
+    announcer.talker.say(text)
+    if os.stat(announcer.inputfile).st_mtime > announcer.last_read:
         print("Reloading events file")
-        announce_from_file(FILE_NAME, PROG_ARGS)
+        announcer.empty_queue()
+        announcer.load()
 
-def announce_day_slots(time_slots, day, args):
-    s = sched.scheduler(datetime.datetime.now, sleep_timedelta)
-    t = talkey.Talkey(preferred_languages=[args.language],
-                      engine_preference=[args.engine])
-    now = datetime.datetime.now()
-    for start in sorted(time_slots.keys()):
-        when = datetime.datetime.combine(day, start)
-        if when > now:
-            print("scheduling", time_slots[start], "at", when)
-            s.enterabs(when, 1,
-                       announce, (t, time_slots[start]))
-    s.run()
+class Announcer():
 
-def announce_from_file(inputfile, args):
-    global LAST_READ
-    LAST_READ = os.stat(inputfile).st_mtime
-    global FILE_NAME
-    FILE_NAME = inputfile
-    global PROG_ARGS
-    PROG_ARGS = args
-    with open (inputfile) as instream:
-        announce_day_slots(
-            {datetime.time.fromisoformat(row['Start']): row['Activity']
-             for row in csv.DictReader(instream)},
-            datetime.date.today(),
-            args)
+    pass
 
-def empty_queue(s):
-    for event in s.queue():
-        s.cancel(event)
+    def __init__(self, inputfile,
+                 engine, language):
+        self.slots = None
+        self.engine = engine
+        self.language = language
+        self.inputfile = inputfile
+        self.last_read = None
+        self.scheduler = sched.scheduler(datetime.datetime.now, sleep_timedelta)
+        self.talker = talkey.Talkey(preferred_languages=[self.language],
+                                    engine_preference=[self.engine])
+        self.load()
 
+    def load(self):
+        self.last_read = os.stat(self.inputfile).st_mtime
+        print("loading", self.inputfile)
+        with open (self.inputfile) as instream:
+            self.announce_day_slots(
+                {datetime.time.fromisoformat(row['Start']): row['Activity']
+                 for row in csv.DictReader(instream)},
+                datetime.date.today())
+
+    def announce_day_slots(self, time_slots, day):
+        now = datetime.datetime.now()
+        for start in sorted(time_slots.keys()):
+            when = datetime.datetime.combine(day, start)
+            if when > now:
+                print("scheduling", time_slots[start], "at", when)
+                self.scheduler.enterabs(when, 1,
+                                        announce, (self, time_slots[start]))
+
+    def run(self):
+        self.scheduler.run()
+
+    def empty_queue(self):
+        for event in self.scheduler.queue():
+            self.scheduler.cancel(event)
+
+def find_dayfile(directory, dayname):
+    for dayfile in [
+            dayname,
+            dayname.lower(),
+            "Timetable", "timetable", "Daily", "daily", "Default", "default"]:
+        dayfile = os.path.join(directory, dayfile + ".csv" )
+        if os.path.isfile(dayfile):
+            return dayfile
+    return None
+            
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--language', '-l',
@@ -66,21 +83,12 @@ def main():
                         action='store_true')
     parser.add_argument('inputfile')
     args = parser.parse_args()
-    if os.path.isdir(args.inputfile):
-        for dayfile in [
-                calendar.day_name[datetime.datetime.now().weekday()],
-                calendar.day_name[datetime.datetime.now().weekday()].lower(),
-                "Timetable", "timetable", "Daily", "daily", "Default", "default"]:
-            dayfile = os.path.join(args.inputfile, dayfile + ".csv" )
-            if os.path.isfile(dayfile):
-                if args.verbose:
-                    print("Loading dayfile", dayfile)
-                announce_from_file(dayfile, args)
-                break
-    else:
-        if args.verbose:
-            print("Loading", args.inputfile)
-        announce_from_file(args.inputfile, args)
+
+    Announcer((find_dayfile(args.inputfile,
+                            calendar.day_name[datetime.datetime.now().weekday()])
+                           if os.path.isdir(args.inputfile)
+                           else args.inputfile),
+              args.engine, args.language).run()
 
 if __name__ == '__main__':
     main()
