@@ -12,7 +12,7 @@ import time
 
 def sleep_timedelta(td):
     time.sleep(td.seconds if isinstance(td, datetime.timedelta) else td)
-        
+
 def announce(announcer, slot):
     print(slot.activity)
     announcer.talker.say(slot.activity)
@@ -64,17 +64,25 @@ class TimeSlot():
 
     def __str__(self):
         return "<%s--%s: %s>" % (self.start, self.end, self.activity)
-        
+
+    def duration(self):
+        return self.end - self.start
+
     def in_progress_at(self, when):
         return when >= self.start and when < self.end
 
+    def starts_during(self, other):
+        return other.in_progress_at(self.start)
+
+    def ends_during(self, other):
+        return self.end > other.start and self.end <= other.end
+
     def clashes_with(self, other):
-        # TODO: I don't think this is right in practice
-        return (self.in_progress_at(other.start)
-                or self.in_progress_at(other.end)
-                or other.in_progress_at(self.start)
-                or other.in_progress_at(self.end))
-        
+        return (self.starts_during(other)
+                or self.ends_during(other)
+                or other.starts_during(self)
+                or other.ends_during(self))
+
 class Announcer():
 
     pass
@@ -88,7 +96,7 @@ class Announcer():
         self.talker = talkey.Talkey(preferred_languages=[self.language],
                                     engine_preference=[self.engine])
 
-    def load(self, input_file):
+    def load(self, input_file, verbose=False):
         if input_file is None:
             return
         self.last_read[input_file] = os.stat(input_file).st_mtime
@@ -114,24 +122,26 @@ class Announcer():
                 prev_start, prev_activity = pending
                 prev_duration = as_time("23:59") - as_time(prev_start)
                 incoming[prev_start] = TimeSlot(prev_start, prev_activity, prev_duration)
-            print("merging", incoming, "into", self.slots)
             clashed = set()
+            if verbose:
+                print("merging; checking for clashes")
             for what in incoming:
-                print("  merging", what, "into", self.slots)
+                if verbose:
+                    print("  checking", what, "for clashes")
                 for when, already in self.slots.items():
-                    print("  checking", what, "against prior", already)
                     if what.clashes_with(already):
-                        print("clash between", what, already)
+                        print("  clash: new:", what, "existing:", already)
                         clashed.add(when)
                 self.slots[what.start] = what
             for clash in clashed:
-                print("removing clash", self.slots[clash])
                 del self.slots[clash]
+            for what in incoming:
+                self.slots[what.start] = what
 
     def show(self):
-        for slot in self.slots:
-            print(slot)
-                
+        for slot in sorted(self.slots.keys()):
+            print(self.slots[slot])
+
     def schedule_announcements(self):
         now = datetime.datetime.now()
         for start, slot in sorted(self.slots.items()):
@@ -158,7 +168,42 @@ def find_day_file(directory, dayname):
         if os.path.isfile(dayfile):
             return dayfile
     return None
-            
+
+def unit_tests():
+    today = datetime.date.today()
+    ten = TimeSlot(datetime.datetime.combine(today, as_time("10:00")), "Activity A", duration=60)
+    ten_thirty = TimeSlot(datetime.datetime.combine(today, as_time("10:30")), "Activity B", duration=60)
+    eleven = TimeSlot(datetime.datetime.combine(today, as_time("11:00")), "Activity C", duration=60)
+    eleven_thirty = TimeSlot(datetime.datetime.combine(today, as_time("11:00")), "Activity D", duration=60)
+    if ten.starts_during(ten_thirty):
+        print("fail: ten.starts_during(ten_thirty)")
+    if not ten_thirty.starts_during(ten):
+        print("fail: not ten_thirty.starts_during(ten)")
+
+    if ten.starts_during(eleven):
+        print("fail: ten.starts_during(eleven)")
+    if eleven.starts_during(ten):
+        print("fail: not eleven.starts_during(ten)")
+
+    if ten.clashes_with(eleven):
+        print("fail: ten.clashes_with(eleven)")
+        print("      ten.starts_during(eleven):", ten.starts_during(eleven))
+        print("      ten.ends_during(eleven):", ten.ends_during(eleven))
+        print("      eleven.starts_during(ten):", eleven.starts_during(ten))
+        print("      eleven.ends_during(ten):", eleven.ends_during(ten))
+    if eleven.clashes_with(ten):
+        print("fail: eleven.clashes_with(ten)")
+
+    if ten.clashes_with(eleven_thirty):
+        print("fail: ten.clashes_with(eleven_thirty)")
+    if eleven_thirty.clashes_with(ten):
+        print("fail: eleven_thirty.clashes_with(ten)")
+
+    if not ten.clashes_with(ten_thirty):
+        print("fail: ten.clashes_with(ten_thirty)")
+    if not ten_thirty.clashes_with(ten):
+        print("fail: not ten_thirty.clashes_with(ten)")
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--language', '-l',
@@ -169,20 +214,27 @@ def main():
                         help="""The engine to use for Talkey""")
     parser.add_argument("--verbose", "-v",
                         action='store_true')
+    parser.add_argument("--unit-tests", "-u",
+                        action='store_true')
     parser.add_argument('inputfile')
     args = parser.parse_args()
 
+    if args.unit_tests:
+        unit_tests()
+        return
+
     my_day = Announcer(args.engine, args.language)
     if os.path.isdir(args.inputfile):
-        my_day.load(find_default_file(args.inputfile))
+        my_day.load(find_default_file(args.inputfile), args.verbose)
         my_day.load(find_day_file(args.inputfile,
-                                  calendar.day_name[datetime.datetime.now().weekday()]))
+                                  calendar.day_name[datetime.datetime.now().weekday()]),
+                    args.verbose)
     else:
-        my_day.load(args.inputfile)
+        my_day.load(args.inputfile, args.verbose)
 
     if args.verbose:
         my_day.show()
-        
+
     my_day.schedule_announcements()
 
 if __name__ == '__main__':
