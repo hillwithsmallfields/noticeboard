@@ -6,7 +6,7 @@ import sys
 
 my_projects = os.path.dirname(sys.path[0])
 print("my_projects is", my_projects)
-sys.path.append(os.path.join(my_projects, "qs/qs"))
+sys.path.append(os.path.join(my_projects, "qs/update"))
 import update
 
 def main():
