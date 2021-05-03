@@ -83,18 +83,15 @@ class TimeSlot():
                 or other.starts_during(self)
                 or other.ends_during(self))
 
-class Announcer():
+class Day():
 
     pass
 
-    def __init__(self, engine, language):
-        self.engine = engine
-        self.language = language
+    def __init__(self, inputfile=None, verbose=False):
         self.slots = {}
         self.last_read = {}
-        self.scheduler = sched.scheduler(datetime.datetime.now, sleep_timedelta)
-        self.talker = talkey.Talkey(preferred_languages=[self.language],
-                                    engine_preference=[self.engine])
+        if inputfile:
+            self.load(inputfile, verbose)
 
     def load(self, input_file, verbose=False):
         if input_file is None:
@@ -138,15 +135,33 @@ class Announcer():
             for what in incoming:
                 self.slots[what.start] = what
 
+class Announcer():
+
+    pass
+
+    def __init__(self, engine, language, day=None):
+        self.engine = engine
+        self.language = language
+        self.day = day or Day()
+        self.scheduler = sched.scheduler(datetime.datetime.now, sleep_timedelta)
+        self.talker = talkey.Talkey(preferred_languages=[self.language],
+                                    engine_preference=[self.engine])
+
+    def load(self, input_file, verbose=False):
+        self.day.load(input_file, verbose)
+
     def show(self):
-        for slot in sorted(self.slots.keys()):
-            print(self.slots[slot])
+        for slot in sorted(self.day.slots.keys()):
+            print(self.day.slots[slot])
+
+    def ordered(self):
+        return [self.day.slots[slot] for slot in sorted(self.day.slots.keys())]
 
     def schedule_announcements(self):
         now = datetime.datetime.now()
-        for start, slot in sorted(self.slots.items()):
+        for start, slot in sorted(self.day.slots.items()):
             if start > now:
-                print("scheduling", self.slots[start], "at", start)
+                print("scheduling", self.day.slots[start], "at", start)
                 self.scheduler.enterabs(start, 1,
                                         announce, (self, slot))
         self.scheduler.run()
@@ -204,6 +219,28 @@ def unit_tests():
     if not ten_thirty.clashes_with(ten):
         print("fail: not ten_thirty.clashes_with(ten)")
 
+def get_day_data(inputfile,
+                 verbose=False):
+
+    my_day = Day()
+
+    if os.path.isdir(inputfile):
+        my_day.load(find_default_file(inputfile), verbose)
+        my_day.load(find_day_file(inputfile,
+                                  calendar.day_name[datetime.date.today().weekday()]),
+                    verbose)
+    else:
+        my_day.load(inputfile, verbose)
+
+    return my_day
+
+def get_day_announcer(inputfile,
+                      language='en',
+                      engine='espeak',
+                      verbose=False):
+    return Announcer(engine, language, day=Day(inputfile,
+                                               verbose=verbose))
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--language', '-l',
@@ -223,19 +260,15 @@ def main():
         unit_tests()
         return
 
-    my_day = Announcer(args.engine, args.language)
-    if os.path.isdir(args.inputfile):
-        my_day.load(find_default_file(args.inputfile), args.verbose)
-        my_day.load(find_day_file(args.inputfile,
-                                  calendar.day_name[datetime.datetime.now().weekday()]),
-                    args.verbose)
-    else:
-        my_day.load(args.inputfile, args.verbose)
+    my_announcer = Announcer(
+        args.engine, args.language, get_day_data(
+            args.inputfile,
+            verbose=args.verbose))
 
     if args.verbose:
-        my_day.show()
+        my_announcer.show()
 
-    my_day.schedule_announcements()
+    my_announcer.schedule_announcements()
 
 if __name__ == '__main__':
     main()
