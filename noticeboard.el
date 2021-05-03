@@ -35,6 +35,7 @@
 (defun connect-to-noticeboard ()
   "Connect to the hardware control program on the noticeboard."
   ;; todo: web pages tell me that the process should run as root, but I don't want to become root here.  Is there a group that is allowed GPIO access?
+  ;; todo: or should I run it as a daemon (as root) and connect to it via a socket?
   (setq noticeboard-process
 	(start-process "noticeboard"
 		       nil
