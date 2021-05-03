@@ -61,16 +61,19 @@ config = {
 
 pwm = None
 camera = None
+power = None
 
 def power_on():
     """Switch the 12V power on."""
     print("switching 12V power on")
     GPIO.output(pin_psu, GPIO.LOW)
+    power = True
 
 def power_off():
     """Switch the 12V power off."""
     print("switching 12V power off")
     GPIO.output(pin_psu, GPIO.HIGH)
+    power = False
 
 last_brightness = 0
 
@@ -185,6 +188,7 @@ def report():
     PIR_active = GPIO.input(pin_pir)
     keyboard_extended = GPIO.input(pin_extended)
     keyboard_retracted = GPIO.input(pin_retracted)
+    print("12V power on:", power)
     print("PIR:", PIR_active)
     print("Keyboard extended:", keyboard_extended)
     print("keyboard retracted:", keyboard_retracted)
