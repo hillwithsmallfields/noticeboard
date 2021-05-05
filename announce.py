@@ -235,11 +235,15 @@ def get_day_data(inputfile,
     return my_day
 
 def get_day_announcer(inputfile,
+                      extra_files=[],
                       language='en',
                       engine='espeak',
                       verbose=False):
-    return Announcer(engine, language, day=Day(inputfile,
-                                               verbose=verbose))
+    day = Day(inputfile,
+              verbose=verbose)
+    for extra in extra_files:
+        day.load(extra)
+    return Announcer(engine, language, day=day)
 
 def main():
     parser = argparse.ArgumentParser()
