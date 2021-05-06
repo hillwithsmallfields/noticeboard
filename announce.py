@@ -54,10 +54,12 @@ class TimeSlot():
     def __init__(self,
                  start, activity,
                  duration=None,
+                 link=None,
                  sound=None):
         self.start = as_datetime(start)
         self.end = (self.start + as_duration(duration)) if duration else None
         self.activity = activity
+        self.link = link
 
     def __repr__(self):
         return "<Activity from %s to %s doing %s>" % (self.start, self.end, self.activity)
@@ -111,8 +113,13 @@ class Day():
                     pending = None
                 activity = row['Activity']
                 duration = row.get('Duration')
+                link = row.get('URL', '')
+                if link == "":
+                    link = None
                 if duration:
-                    incoming.append(TimeSlot(start, activity, duration))
+                    incoming.append(TimeSlot(start, activity,
+                                             duration=duration,
+                                             link=link))
                 else:
                     pending = (start, activity)
             if pending:
