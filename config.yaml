@@ -1,0 +1,50 @@
+finance:
+        accounts-config: accounts.yaml
+        accumulated-bank-statements-file: $COMMON/finances/handelsbanken/handelsbanken-full.csv
+        bank-statement-template: ~/Downloads/Transaction*.csv
+        budgeting-classes-file: budgetting-classes.yaml
+        configdir: ~/open-projects/github.com/hillwithsmallfields/qs/conf
+        conversions-config: conversions.yaml
+        conversions-dir: $COMMON/finances
+        finances-completions: $COMMON/var/finances-completions.el
+        main-account: $COMMON/finances/finances.csv
+        merge-results-dir: ~/scratch/auto-merge-results
+        merge-results-file: merged-with-unmatched-all.csv
+        thresholds-file: budgetting-thresholds.yaml
+inventory:
+        books-file: $COMMON/org/books.csv
+        inventory-file: $COMMON/org/inventory.csv
+        project-parts-file: $COMMON/org/project-parts.csv
+        stock-file: $COMMON/org/stock.csv
+        storage-file: $COMMON/org/storage.csv
+physical:
+        running-filename: $COMMON/health/garmin-running.csv
+        cycling-filename: $COMMON/health/garmin-cycling.csv
+        garmin-incoming-pattern: ~/Downloads/Activities*.csv
+        mfp-filename: $COMMON/health/mfp-accum.csv
+        omron-filename: $COMMON/health/blood-pressure.csv
+        omron-incoming-pattern: ~/Downloads/*BP-Logbook*.csv
+        oura-filename: $COMMON/health/sleep.csv
+        physical-filename: $COMMON/health/physical.csv
+        weight-filename: $COMMON/health/weight.csv
+        temperature-file: $COMMON/health/temperature.csv
+start page:
+        start-page-generator: make_link_table.py
+        startpage: ~/private_html/startpage.html
+        startpage-source: $COMMON/org/startpage.yaml
+        startpage-style: $COMMON/org/startpage.css
+travel:
+        travel-filename: $COMMON/travel/travel.csv
+        places-filename: $COMMON/travel/places/places.csv
+contacts:
+        contacts-file: $COMMON/org/contacts.csv
+weather:
+        weather-filename: $COMMON/var/weather.csv
+general:
+        archive: ~/archive
+        charts: ~/private_html/dashboard
+        default-timetable: timetable.csv
+        projects-dir: ~/open-projects/github.com
+        projects-user: hillwithsmallfields
+        reflections-dir: $COMMON/texts/reflection
+        timetables-dir: $COMMON/timetables
