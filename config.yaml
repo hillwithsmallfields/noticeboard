@@ -28,7 +28,7 @@ physical:
         physical-filename: $COMMON/health/physical.csv
         weight-filename: $COMMON/health/weight.csv
         temperature-file: $COMMON/health/temperature.csv
-start page:
+start-page:
         start-page-generator: make_link_table.py
         startpage: ~/private_html/startpage.html
         startpage-source: $COMMON/org/startpage.yaml
@@ -40,11 +40,20 @@ contacts:
         contacts-file: $COMMON/org/contacts.csv
 weather:
         weather-filename: $COMMON/var/weather.csv
-general:
+backups:
         archive: ~/archive
-        charts: ~/private_html/dashboard
+        backup-iso-format: backup-%s.iso
+        backup_isos_directory: ~/isos/backups
+        common-backups: ~/common-backups
+        daily-backup-template: org-%s.tgz
+        projects-dir: ~/open-projects/github.com
+        projects-user: hillwithsmallfields
+        weekly-backup-template: common-%s.tgz
+timetables:
         default-timetable: timetable.csv
+        timetables-dir: $COMMON/timetables
+general:
+        charts: ~/private_html/dashboard
         projects-dir: ~/open-projects/github.com
         projects-user: hillwithsmallfields
         reflections-dir: $COMMON/texts/reflection
-        timetables-dir: $COMMON/timetables

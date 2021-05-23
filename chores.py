@@ -25,26 +25,12 @@ def main():
                         help="""Be more verbose.""")
     args = parser.parse_args()
 
-    file_locations = {
-        # backups and archives
-        'archive': "~/archive",
-        'backup-iso-format': "backup-%s.iso",
-        'backup_isos_directory': "~/isos/backups",
-        'common-backups': "~/common-backups",
-        'daily-backup-template': "org-%s.tgz",
-        'projects-dir': "~/open-projects/github.com",
-        'projects-user': "hillwithsmallfields",
-        'weekly-backup-template': "common-%s.tgz",
-    }
-    file_locations = {k: os.path.expanduser(os.path.expandvars(v))
-                      for k, v in file_locations.items()}
-
-    update.updates(args.charts,
-                   args.begin,
+    update.updates(args.begin,
                    args.end,
                    not args.no_externals,
                    args.verbose)
-    backup_and_archive.backup_and_archive(file_locations)
+
+    backup_and_archive.backup_and_archive()
 
 if __name__ == '__main__':
     main()

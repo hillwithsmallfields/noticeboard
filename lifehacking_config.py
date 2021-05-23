@@ -67,7 +67,7 @@ HARDCODED_DEFAULT_CONFIG = {
         'weight-filename': "$COMMON/health/weight.csv",
         'temperature-file': "$COMMON/health/temperature.csv"},
 
-    'start page': {
+    'start-page': {
         'start-page-generator': 'make_link_table.py',
         'startpage': "~/private_html/startpage.html",
         'startpage-source': "$COMMON/org/startpage.yaml",
@@ -101,17 +101,25 @@ def recursive_expand(value):
                         if isinstance(value, list)
                         else value)))
 
-def load_config(no_hardcoded_default, no_main_config, main_config_file, config_file):
+def load_config(no_hardcoded_default=False,
+                no_main_config=False,
+                main_config_file=os.path.join(source_dir, "config.yaml"),
+                config_files=[]):
     config = {} if no_hardcoded_default else HARDCODED_DEFAULT_CONFIG
 
     if not no_main_config:
         with open(main_config_file) as yaml_stream:
             rec_update(config, yaml.safe_load(yaml_stream))
 
-    load_multiple_yaml(config, config_file)
+    load_multiple_yaml(config, config_files)
 
     config = recursive_expand(config)
 
+    return config
+
+def lookup(config, *keys):
+    for key in keys:
+        config = config[key]
     return config
 
 def main():
@@ -136,9 +144,7 @@ def main():
     if args.show_all:
         print(config)
     else:
-        for key in args.keys:
-            config = config[key]
-        print(config)
+        print(lookup(config, *args.keys))
 
 if __name__ == '__main__':
     main()

@@ -3,16 +3,25 @@
 import datetime
 import os
 
+import lifehacking_config
+
+CONFIGURATION = {}
+
+def CONF(*keys):
+    return lifehacking_config.lookup(CONFIGURATION, *keys)
+
 def make_tarball(tarball, parent_directory, of_directory):
     if not os.path.isfile(tarball):
         command = "tar cz -C %s %s > %s" % (parent_directory, of_directory, tarball)
         print("backup command is", command)
         os.system(command)
 
-def backup_and_archive(file_locations):
-    common_backups = file_locations['common-backups']
-    daily_backup_template = file_locations['daily-backup-template']
-    weekly_backup_template = file_locations['weekly-backup-template']
+def backup_and_archive():
+    global CONFIGURATION
+    CONFIGURATION = lifehacking_config.load_config()
+    common_backups = CONF('backups', 'common-backups')
+    daily_backup_template = CONF('backups', 'daily-backup-template')
+    weekly_backup_template = CONF('backups', 'weekly-backup-template')
     today = datetime.date.today()
     make_tarball(os.path.join(common_backups, daily_backup_template % today.isoformat()),
                  os.path.expandvars("$COMMON"),
@@ -22,13 +31,13 @@ def backup_and_archive(file_locations):
         make_tarball(os.path.join(common_backups, weekly_backup_template % today.isoformat()),
                      os.path.expandvars("$HOME"), "common")
     if today.day == 1:
-        backup_isos_directory = file_locations['backup_isos_directory']
-        monthly_backup_name = os.path.join(backup_isos_directory, file_locations['backup-iso-format'] % today.isoformat())
+        backup_isos_directory = CONF('backups', 'backup_isos_directory')
+        monthly_backup_name = os.path.join(backup_isos_directory, CONF('backups', 'backup-iso-format') % today.isoformat())
         if not os.path.isfile(monthly_backup_name):
             # make_tarball("/tmp/music.tgz", os.path.expandvars("$HOME"), "Music")
             make_tarball("/tmp/github.tgz",
-                         file_locations['projects-dir'],
-                         file_locations['projects-user'])
+                         CONF('backups', 'projects-dir'),
+                         CONF('backups', 'projects-user'))
             files_to_backup = [
                 latest_file_matching(os.path.join(common_backups, daily_backup_template % "*")),
                 latest_file_matching(os.path.join(common_backups, weekly_backup_template % "*")),

@@ -137,6 +137,7 @@ class Day():
                         print("  clash: new:", what, "existing:", already)
                         clashed.add(when)
                 self.slots[what.start] = what
+            # TODO: split slots as needed, e.g. to put a smaller one inside a larger one, going back to the larger one afterwards
             for clash in clashed:
                 del self.slots[clash]
             for what in incoming:
