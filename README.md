@@ -10,5 +10,6 @@ PIR detector, a couple of LED halogen-replacement bulbs, and a Picam.
 The 12V PSU for the screen and the keyboard motor can be switched on
 and off by a solid-state relay controlled from the Pi.
 
-The program is intended to be run from Emacs (with the start-process
-function) and can take commands on its standard input.
+The program can take commands on its standard input, and is intended
+to be commanded by Emacs.  However, it must have access to the GPIO
+pins.

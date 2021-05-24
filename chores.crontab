@@ -1,0 +1,4 @@
+# run my daily tasks, well before the earliest I'm likely to be up,
+# but on the right day, and not excessively early (to get the weather
+# fairly soon before the day):
+0 4 * * * $HOME/open-projects/github/hillwithsmallfields/noticeboard/chores

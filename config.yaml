@@ -11,6 +11,9 @@ finance:
         merge-results-dir: ~/scratch/auto-merge-results
         merge-results-file: merged-with-unmatched-all.csv
         thresholds-file: budgetting-thresholds.yaml
+        main-current-account: Handelsbanken current account
+        main-savings-account: Handelsbanken savings
+        account-balances: $COMMON/finances/account-balances.csv
 inventory:
         books-file: $COMMON/org/books.csv
         inventory-file: $COMMON/org/inventory.csv
@@ -40,6 +43,9 @@ contacts:
         contacts-file: $COMMON/org/contacts.csv
 weather:
         weather-filename: $COMMON/var/weather.csv
+        sunlight-times-file: $COMMON/var/sunlight-times.json
+        weather-country: GB
+        weather-city: Cambridge
 backups:
         archive: ~/archive
         backup-iso-format: backup-%s.iso

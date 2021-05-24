@@ -1,6 +1,6 @@
 ;;; noticeboard.el --- interface to noticeboard hardware  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2018  John Sturdy
+;; Copyright (C) 2018, 2021  John Sturdy
 
 ;; Author: John Sturdy <john.sturdy@grapeshot.com>
 ;; Keywords: hardware
@@ -34,8 +34,7 @@
 
 (defun connect-to-noticeboard ()
   "Connect to the hardware control program on the noticeboard."
-  ;; todo: web pages tell me that the process should run as root, but I don't want to become root here.  Is there a group that is allowed GPIO access?
-  ;; todo: or should I run it as a daemon (as root) and connect to it via a socket?
+  ;; TODO: The user must be in a group that is allowed GPIO access?
   (setq noticeboard-process
 	(start-process "noticeboard"
 		       nil
