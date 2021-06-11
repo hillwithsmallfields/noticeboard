@@ -119,8 +119,18 @@ def load_config(no_hardcoded_default=False,
 
 def lookup(config, *keys):
     for key in keys:
+        if key not in config:
+            return None
         config = config[key]
     return config
+
+def override(config, keys, value):
+    for key in keys[:-1]:
+        if key in config:
+            config = config[key]
+        else:
+            config[key] = {}
+    config[keys[-1]] = value
 
 def main():
     """Look up and output a config element.
@@ -133,6 +143,8 @@ def main():
     parser.add_argument("--config-file", "-c",
                         action='append')
     parser.add_argument("--show-all", "-a", action='store_true')
+    parser.add_argument("--override", "-o", nargs=2, action='append',
+                        help="""Override a value.  The parts of the key are colon-separated.""")
     parser.add_argument("keys", nargs='*')
     args = parser.parse_args()
 
@@ -140,6 +152,10 @@ def main():
                          args.no_main_config,
                          args.main_config_file,
                          args.config_file)
+
+    if args.override:
+        for overrider in args.override:
+            override(config, overrider[0].split(':'), overrider[1])
 
     if args.show_all:
         print(config)
