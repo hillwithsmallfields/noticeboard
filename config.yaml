@@ -1,14 +1,14 @@
 finance:
         accounts-config: accounts.yaml
         accumulated-bank-statements-file: $COMMON/finances/handelsbanken/handelsbanken-full.csv
-        bank-statement-template: ~/Downloads/Transaction*.csv
+        bank-statement-template: $DOWNLOADS/Transaction*.csv
         budgeting-classes-file: budgetting-classes.yaml
         configdir: ~/open-projects/github.com/hillwithsmallfields/qs/conf
         conversions-config: conversions.yaml
         conversions-dir: $COMMON/finances
         finances-completions: $COMMON/var/finances-completions.el
         main-account: $COMMON/finances/finances.csv
-        merge-results-dir: ~/scratch/auto-merge-results
+        merge-results-dir: $SCRATCH/auto-merge-results
         merge-results-file: merged-with-unmatched-all.csv
         thresholds-file: budgetting-thresholds.yaml
         main-current-account: Handelsbanken current account
@@ -23,17 +23,19 @@ inventory:
 physical:
         running-filename: $COMMON/health/garmin-running.csv
         cycling-filename: $COMMON/health/garmin-cycling.csv
-        garmin-incoming-pattern: ~/Downloads/Activities*.csv
+        garmin-incoming-pattern: $DOWNLOADS/Activities*.csv
         mfp-filename: $COMMON/health/mfp-accum.csv
         omron-filename: $COMMON/health/blood-pressure.csv
-        omron-incoming-pattern: ~/Downloads/*BP-Logbook*.csv
+        omron-incoming-pattern: $DOWNLOADS/*BP-Logbook*.csv
         oura-filename: $COMMON/health/sleep.csv
         physical-filename: $COMMON/health/physical.csv
         weight-filename: $COMMON/health/weight.csv
         temperature-file: $COMMON/health/temperature.csv
+dashboard:
+        views: $COMMON/var/views.json
 start-page:
         start-page-generator: make_link_table.py
-        startpage: ~/private_html/startpage.html
+        startpage: $PRIVATEHTML/startpage.html
         startpage-source: $COMMON/org/startpage.yaml
         startpage-style: $COMMON/org/startpage.css
 travel:
@@ -47,10 +49,10 @@ weather:
         weather-country: GB
         weather-city: Cambridge
 backups:
-        archive: ~/archive
+        archive: $ARCHIVE
         backup-iso-format: backup-%s.iso
-        backup_isos_directory: ~/isos/backups
-        common-backups: ~/common-backups
+        backup_isos_directory: $ISOS/backups
+        common-backups: $COMMONBACKUPS
         daily-backup-template: org-%s.tgz
         projects-dir: ~/open-projects/github.com
         projects-user: hillwithsmallfields
@@ -59,7 +61,7 @@ timetables:
         default-timetable: timetable.csv
         timetables-dir: $COMMON/timetables
 general:
-        charts: ~/private_html/dashboard
+        charts: $PRIVATEHTML/dashboard
         projects-dir: ~/open-projects/github.com
         projects-user: hillwithsmallfields
         reflections-dir: $COMMON/texts/reflection
