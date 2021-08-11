@@ -33,6 +33,7 @@ physical:
         temperature-file: $COMMON/health/temperature.csv
 dashboard:
         views: $COMMON/var/views.json
+        parcels:  $COMMON/var/parcels-expected.json
 start-page:
         start-page-generator: make_link_table.py
         startpage: $PRIVATEHTML/startpage.html
