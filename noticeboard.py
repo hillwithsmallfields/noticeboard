@@ -21,16 +21,17 @@ except RuntimeError:
 
 # Pin          BCM  Board
 # input pins        #
-pin_pir        = 4  # 7
+pin_pir        = 16 # 36
 pin_retracted  = 23 # 16
 pin_extended   = 24 # 18
+pin_temperature = 4 # 7fg
 # output pins       #
 pin_psu        = 17 # 11
+pin_speaker    = 22 # 15
 pin_motor_a    = 27 # 13
-pin_motor_b    = 22 # 15
-pin_brightness = 5  # 29
+pin_motor_b    = 26 # 37
 pin_lamp_left  = 6  # 31
-pin_lamp_right = 13 # 33
+pin_lamp_right = 5 # 29
 
 # This is overwritten from /etc/noticeboard.conf if it's available
 config = {
@@ -182,7 +183,7 @@ def auto():
     global manual_away
     manual_at_home = False
     manual_away = False
-        
+
 def report():
     """Output the status of the noticeboard hardware."""
     PIR_active = GPIO.input(pin_pir)
@@ -257,7 +258,7 @@ def show_help():
         if docstring is None:
             docstring = "Undocumented"
         print(command_name + ' '*(maxlen - len(command_name)), docstring)
-    
+
 actions = {
     "auto": auto,
     "away": away,
@@ -318,7 +319,7 @@ def main():
     GPIO.setup(pin_motor_b, GPIO.OUT, initial=GPIO.LOW)
     GPIO.setup(pin_brightness, GPIO.OUT, initial=GPIO.LOW)
     global pwm
-    pwm = GPIO.PWM(pin_brightness, 1000)
+    pwm = GPIO.PWM(pin_brightness, 1000) # TODO: change this; the hardware PWM isn't available when using the sound output jack
     GPIO.setup(pin_lamp_left, GPIO.OUT, initial=GPIO.LOW)
     GPIO.setup(pin_lamp_right, GPIO.OUT, initial=GPIO.LOW)
     pir_seen_at = None
