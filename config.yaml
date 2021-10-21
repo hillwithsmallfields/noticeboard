@@ -24,9 +24,10 @@ physical:
         running-filename: $COMMON/health/garmin-running.csv
         cycling-filename: $COMMON/health/garmin-cycling.csv
         garmin-incoming-pattern: $DOWNLOADS/Activities*.csv
+        garmin-manual-fetching-page: https://connect.garmin.com/modern/activities
         mfp-filename: $COMMON/health/mfp-accum.csv
         omron-filename: $COMMON/health/blood-pressure.csv
-        omron-incoming-pattern: $DOWNLOADS/*BP-Logbook*.csv
+        omron-incoming-pattern: $DOWNLOADS/BloodPressure_*.csv
         oura-filename: $COMMON/health/sleep.csv
         physical-filename: $COMMON/health/physical.csv
         weight-filename: $COMMON/health/weight.csv
