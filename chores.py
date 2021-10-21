@@ -26,6 +26,9 @@ def main():
                         help="""Latest date to chart.""")
     parser.add_argument("--no-externals", action='store_true',
                         help="""Don't pester external servers""")
+    parser.add_argument("--force", action='store_true',
+                        help="""Do the updates even if the files have been updated
+                        within the last day.""")
     parser.add_argument("--testing", action='store_true',
                         help="""Use an alternate directory which can be reset.""")
     parser.add_argument("--verbose", "-v", action='store_true',
@@ -36,6 +39,7 @@ def main():
                    args.end,
                    not args.no_externals,
                    verbose=args.verbose,
+                   force=args.force,
                    testing=args.testing)
 
     # TODO: recursive listing of directories, or tar and md5sum them, to detect damage
