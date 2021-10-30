@@ -33,11 +33,11 @@
    |-------------------+-------------------+----+----+-------------------+--------------|
    |                   | Reserved          | 27 | 28 | Reserved          |              |
    |-------------------+-------------------+----+----+-------------------+--------------|
-   | brightness out    | GPIO 5/PWM        | 29 | 30 | GND               |              |
+   |                   | GPIO 5            | 29 | 30 | GND               |              |
    |-------------------+-------------------+----+----+-------------------+--------------|
-   | left lamp out     | GPIO 6            | 31 | 32 | GPIO 12           |              |
+   |                   | GPIO 6            | 31 | 32 | GPIO 12           | left lamp    |
    |-------------------+-------------------+----+----+-------------------+--------------|
-   | right lamp out    | GPIO 13           | 33 | 34 | GND               |              |
+   | right lamp        | GPIO 13           | 33 | 34 | GND               |              |
    |-------------------+-------------------+----+----+-------------------+--------------|
    |                   | GPIO 19/SPI1 MISO | 35 | 36 | GPIO 16/SPI1 CSO  |              |
    |-------------------+-------------------+----+----+-------------------+--------------|
@@ -49,9 +49,9 @@
 ** MOSFET pinout
 
    /---|
-  |    |---- source (connect to control input)
-  |o   |---- drain  (connect to +ve supply)
-  |    |---- gate   (connect to load)
+  |    |---- source (connect to ground)
+  |o   |---- drain  (connect to load)
+  |    |---- gate   (connect to control input)
    \---|
 
 ** Audio amp pinout
@@ -65,3 +65,38 @@
    |   | in          |
    |   | mute        |
    |---+-------------|
+
+** 74AHCT125
+
+   
+   |--------+---+----+--------|
+   | 1 ~OE  | 1 | 14 | VCC    |
+   |--------+---+----+--------|
+   | -> 1 A | 2 | 13 | 4 ~OE  |
+   |--------+---+----+--------|
+   | <- 1 Y | 3 | 12 | 4 A <- |
+   |--------+---+----+--------|
+   | 2 ~OE  | 4 | 11 | 4 Y -> |
+   |--------+---+----+--------|
+   | -> 2 A | 5 | 10 | 3 ~OE  |
+   |--------+---+----+--------|
+   | <- 2 Y | 6 |  9 | 3 A <- |
+   |--------+---+----+--------|
+   | GND    | 7 |  8 | 3 Y -> |
+   |--------+---+----+--------|
+
+* Pi4 PWM
+   
+   https://forums.raspberrypi.com/viewtopic.php?t=308908 says:
+
+   On the Pi 4B and 400 (and CM4) you have two pairs of PWM channels.
+
+   Those are:
+   PWM0_0 available on GPIO 12, 18 or 52.
+   PWM0_1 available on GPIO 13, 19, 45 or 53
+   PWM1_0 available on GPIO 40
+   PWM1_1 available on GPIO 41
+
+   Only GPIOs 12, 13, 18 and 19 are brought out to the 40-pin
+   header. So you really only have two PWMs usable.
+   
