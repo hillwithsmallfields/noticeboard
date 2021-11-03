@@ -21,17 +21,22 @@ except RuntimeError:
 
 # Pin          BCM  Board
 # input pins        #
-pin_pir        = 16 # 36
-pin_retracted  = 23 # 16
-pin_extended   = 24 # 18
-pin_temperature = 4 # 7fg
+pin_pir        = 17 # 11
+pin_retracted  = 11 # 23
+pin_extended   =  5 # 29
+pin_porch_pir  = 19 # 35
+pin_temperature = 4 # 7
 # output pins       #
-pin_psu        = 17 # 11
-pin_speaker    = 22 # 15
-pin_motor_a    = 27 # 13
-pin_motor_b    = 26 # 37
-pin_lamp_left  = 6  # 31
-pin_lamp_right = 5 # 29
+pin_psu        =  8 # 24
+pin_speaker    =  7 # 26
+pin_motor_a    = 23 # 16
+pin_motor_b    = 24 # 17
+pin_lamp_left  = 12 # 32
+pin_lamp_right = 13 # 33
+pin_porch_lamp =  2 # 3
+
+# see https://forums.raspberrypi.com/viewtopic.php?t=278003 for driving the lamps
+# see https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20 for the temperature sensor
 
 # This is overwritten from /etc/noticeboard.conf if it's available
 config = {
@@ -60,108 +65,160 @@ config = {
     'pir_log_file': "/var/log/pir"
 }
 
-pwm = None
 camera = None
-power = None
 
-def power_on():
-    """Switch the 12V power on."""
-    print("switching 12V power on")
-    GPIO.output(pin_psu, GPIO.LOW)
-    power = True
+class Lamp(object):
 
-def power_off():
-    """Switch the 12V power off."""
-    print("switching 12V power off")
-    GPIO.output(pin_psu, GPIO.HIGH)
-    power = False
+    pass
 
-last_brightness = 0
+    def __init__(self, pin):
+        self.gpio = pin
+        self.target = 0
+        self.current = 0
+        self.pwm = GPIO.PWM(self.gpio, 1000)
+        GPIO.setup(self.gpio, GPIO.OUT, initial=GPIO.LOW)
 
-def lamps(brightness, fade, left, right):
-    """Set lamp brightness.
-Left and right lamps can be turned on and off separately, but the
-brightness must be the same."""
-    global last_brightness
-    print("lamps", left, right, "to brightness", brightness, "from last_brightness", last_brightness, "with fade", fade)
-    if brightness > 0 and (left or right):
-        power_on()
-        GPIO.output(pin_lamp_left, GPIO.HIGH if left else GPIO.LOW)
-        GPIO.output(pin_lamp_right, GPIO.HIGH if right else GPIO.LOW)
-        if fade and brightness != last_brightness:
-            fade_delay = config['delays']['lamp']
-            step = (brightness - last_brightness) / 10
-            print("changing brightness from", last_brightness, "to", brightness, "in steps of", step, "at interval", fade_delay)
-            if step > 0:
-                while last_brightness < brightness:
-                    print(last_brightness)
-                    pwm.ChangeDutyCycle(last_brightness)
-                    time.sleep(fade_delay)
-                    last_brightness += step
+    def set(self, brightness):
+        self.target = brightness
+
+    def step(self):
+        if self.current < self.target:
+            if self.current == 0:
+                self.pwm.start(0)
+            self.current += 1
+            self.pwm.ChangeDutyCycle(self.current)
+        elif self.current > self.target:
+            self.current -= 1
+            if self.current == 0:
+                self.pwm.stop()
             else:
-                while last_brightness > brightness:
-                    print(last_brightness)
-                    pwm.ChangeDutyCycle(last_brightness)
-                    time.sleep(fade_delay)
-                    last_brightness -= step
+                self.pwm.ChangeDutyCycle(self.current)
+
+    def changing():
+        return self.current != self.target
+
+class NoticeBoardHardware(object):
+
+    pass
+
+    def __init__(self):
+        self.power = False
+        self._lamps = [Lamp(pin_lamp_left), Lamp(pin_lamp_right)]
+        self.extending = False
+        self.retracting = False
+        self.moving_steps = 0
+
+    def power_on(self):
+        """Switch the 12V power on."""
+        print("switching 12V power on")
+        GPIO.output(pin_psu, GPIO.LOW)
+        self.power = True
+
+    def power_off(self):
+        """Switch the 12V power off."""
+        print("switching 12V power off")
+        GPIO.output(pin_psu, GPIO.HIGH)
+        self.power = False
+
+    def lamps(self, brightness):
+        if brightness > 0:
+            self.power_on()
+        for lamp in self._lamps:
+            lamp.set(brightness)
+
+    def shine(self):
+        """Switch the lamps on."""
+        print("switching lamps on")
+        lamps(100)
+
+    def quench(self):
+        """Switch the lamps off."""
+        print("switching lamps off")
+        lamps(0)
+
+    def extended(self):
+        return GPIO.input(pin_extended)
+
+    def retracted(self):
+        return GPIO.input(pin_retracted)
+
+    def extend(self):
+        """Slide the keyboard drawer out."""
+        if self.extended():
+            print("keyboard already extended")
         else:
-            pwm.ChangeDutyCycle(brightness)
-    else:
-        # just switch the lot off
-        GPIO.output(pin_lamp_left, GPIO.LOW)
-        GPIO.output(pin_lamp_right, GPIO.LOW)
-        pwm.ChangeDutyCycle(pin_brightness)
+            if not self.extending:
+                self.moving_steps = 0
+            power_on()
+            self.extending = True
+            # step_time = config['delays']['motor']
+            # timeout = float(config['delays']['motor_timeout'])
+            # countdown = int(timeout / step_time)
+            # print("extending keyboard in", countdown, step_time, "time steps")
+            GPIO.output(pin_motor_a, GPIO.LOW)
+            GPIO.output(pin_motor_b, GPIO.HIGH)
+            # while not GPIO.input(pin_extended):
+            #     countdown -= 1
+            #     if countdown <= 0:
+            #         print("timing out on keyboard motion")
+            #         break
+            #     time.sleep(step_time)
+            # GPIO.output(pin_motor_b, GPIO.LOW)
 
-def shine():
-    """Switch the lamps on."""
-    power_on()
-    print("switching lamps on")
-    lamps(100, True, True, True)
+    def retract(self):
+        """Slide the keyboard drawer back in."""
+        if self.retracted():
+            print("keyboard already retracted")
+        else:
+            if not self.retracting:
+                self.moving_steps = 0
+            power_on()
+            self.retracting = True
+            # step_time = config['delays']['motor']
+            # timeout = float(config['delays']['motor_timeout'])
+            # countdown = int(timeout / step_time)
+            # print("retracting keyboard in", countdown, step_time, "time steps")
+            GPIO.output(pin_motor_b, GPIO.LOW)
+            GPIO.output(pin_motor_a, GPIO.HIGH)
+            # while not GPIO.input(pin_retracted):
+            #     countdown -= 1
+            #     if countdown <= 0:
+            #         print("timing out on keyboard motion")
+            #         break
+            #     time.sleep(config['delays']['motor'])
+            # GPIO.output(pin_motor_a, GPIO.LOW)
 
-def quench():
-    """Switch the lamps off."""
-    print("switching lamps off")
-    lamps(0, False, False, False)
+    def step(self):
+        for lamp in self._lamps:
+            lamp.step()
+        if self.retracting:
+            if self.retracted() or self.moving_steps > STEPMAX:
+                self.retracting = False
+                GPIO.output(pin_motor_b, GPIO.LOW)
+                GPIO.output(pin_motor_a, GPIO.LOW)
+            else:
+                self.moving_steps += 1
+        if self.extending:
+            if self.extended() or self.moving_steps > STEPMAX:
+                self.extending = False
+                GPIO.output(pin_motor_b, GPIO.LOW)
+                GPIO.output(pin_motor_a, GPIO.LOW)
+            else:
+                self.moving_steps += 1
+        return (FAST_INTERVAL
+                if self.retracting or self.extending or any(lamp.changing() for lamp in self._lamps)
+                else SLOW_INTERVAL)
 
-def extend():
-    """Slide the keyboard drawer out."""
-    if GPIO.input(pin_extended):
-        print("keyboard already extended")
-    else:
-        power_on()
-        step_time = config['delays']['motor']
-        timeout = float(config['delays']['motor_timeout'])
-        countdown = int(timeout / step_time)
-        print("extending keyboard in", countdown, step_time, "time steps")
-        GPIO.output(pin_motor_a, GPIO.LOW)
-        GPIO.output(pin_motor_b, GPIO.HIGH)
-        while not GPIO.input(pin_extended):
-            countdown -= 1
-            if countdown <= 0:
-                print("timing out on keyboard motion")
-                break
-            time.sleep(step_time)
-        GPIO.output(pin_motor_b, GPIO.LOW)
-
-def retract():
-    """Slide the keyboard drawer back in."""
-    if GPIO.input(pin_retracted):
-        print("keyboard already retracted")
-    else:
-        power_on()
-        step_time = config['delays']['motor']
-        timeout = float(config['delays']['motor_timeout'])
-        countdown = int(timeout / step_time)
-        print("retracting keyboard in", countdown, step_time, "time steps")
-        GPIO.output(pin_motor_b, GPIO.LOW)
-        GPIO.output(pin_motor_a, GPIO.HIGH)
-        while not GPIO.input(pin_retracted):
-            countdown -= 1
-            if countdown <= 0:
-                print("timing out on keyboard motion")
-                break
-            time.sleep(config['delays']['motor'])
-        GPIO.output(pin_motor_a, GPIO.LOW)
+    def report(self):
+        """Output the status of the noticeboard hardware."""
+        PIR_active = GPIO.input(pin_pir)
+        keyboard_extended = self.extended()
+        keyboard_retracted = self.retracted()
+        print("12V power on:", power)
+        print("PIR:", PIR_active)
+        print("Keyboard extended:", keyboard_extended)
+        print("keyboard retracted:", keyboard_retracted)
+        print("expected_at_home():", expected_at_home())
 
 def at_home():
     """Tell the system I am at home."""
@@ -183,18 +240,6 @@ def auto():
     global manual_away
     manual_at_home = False
     manual_away = False
-
-def report():
-    """Output the status of the noticeboard hardware."""
-    PIR_active = GPIO.input(pin_pir)
-    keyboard_extended = GPIO.input(pin_extended)
-    keyboard_retracted = GPIO.input(pin_retracted)
-    print("12V power on:", power)
-    print("PIR:", PIR_active)
-    print("Keyboard extended:", keyboard_extended)
-    print("keyboard retracted:", keyboard_retracted)
-    print("last_brightness", last_brightness)
-    print("expected_at_home():", expected_at_home())
 
 def convert_interval(interval_string):
     """Convert a string giving start and end times into a tuple.
@@ -317,7 +362,6 @@ def main():
     GPIO.setup(pin_psu, GPIO.OUT, initial=GPIO.LOW)
     GPIO.setup(pin_motor_a, GPIO.OUT, initial=GPIO.LOW)
     GPIO.setup(pin_motor_b, GPIO.OUT, initial=GPIO.LOW)
-    GPIO.setup(pin_brightness, GPIO.OUT, initial=GPIO.LOW)
     global pwm
     pwm = GPIO.PWM(pin_brightness, 1000) # TODO: change this; the hardware PWM isn't available when using the sound output jack
     GPIO.setup(pin_lamp_left, GPIO.OUT, initial=GPIO.LOW)
