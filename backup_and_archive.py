@@ -10,6 +10,8 @@ import lifehacking_config
 
 CONFIGURATION = {}
 
+DVD_FULL = 4700000000
+
 def CONF(*keys):
     return lifehacking_config.lookup(CONFIGURATION, *keys)
 
@@ -23,7 +25,12 @@ def latest_file_matching(template):
     files = glob.glob(template)
     return files and sorted(files, key=os.path.getmtime)[-1]
 
+def get_next_backup_file():
+    """Stub for working through a round-robin of extra files to back up."""
+    return None
+
 def backup_and_archive(force=False):
+    """Take backups, and make an archive, if today is one of the specified days."""
     global CONFIGURATION
     CONFIGURATION = lifehacking_config.load_config()
     common_backups = CONF('backups', 'common-backups')
@@ -51,6 +58,7 @@ def backup_and_archive(force=False):
         if backup_isos_directory == "" or backup_isos_directory.startswith("$"):
             backup_isos_directory = os.path.expandvars("$HOME/isos")
         monthly_backup_name = os.path.join(backup_isos_directory, CONF('backups', 'backup-iso-format') % today.isoformat())
+        # this assumes it's a different filename each time:
         if not os.path.isfile(monthly_backup_name):
             # make_tarball("/tmp/music.tgz", os.path.expandvars("$HOME"), "Music")
             make_tarball("/tmp/github.tgz",
@@ -75,8 +83,29 @@ def backup_and_archive(force=False):
                 sig = digest + ".sig"
                 if os.path.isfile(sig):
                     files_to_backup.append(sig)
-            print("Time to take a monthly backup of", files_to_backup, "into", monthly_backup_name)
-            os.system("genisoimage -o %s %s" % (monthly_backup_name, " ".join(files_to_backup)))
+            # We might have room to back up some more files:
+            stuffed = False
+            while True:
+                os.system("genisoimage -o %s %s" % (monthly_backup_name, " ".join(files_to_backup)))
+                if stuffed:
+                    # we exceeded the limit last time, and have now
+                    # removed the file that took us over the limit, so
+                    # now we're full:
+                    break
+                if os.path.getsize(monthly_backup_name) >= DVD_FULL:
+                    # we have just exceeded the limit this time, so back off one file:
+                    files_to_backup = files_to_backup[:-1]
+                    stuffed = True
+                else:
+                    # pick something else to include in the backup,
+                    # maybe on a round robin system:
+                    next_file_to_backup = get_next_backup_file()
+                    if next_file_to_backup:
+                        files_to_backup.append(next_file_to_backup)
+                    else:
+                        # we couldn't find anything else to include in
+                        # the backup:
+                        break
             print("made backup in", monthly_backup_name)
 
 def main():
