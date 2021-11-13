@@ -96,6 +96,9 @@ class Day():
             self.load(inputfile, verbose)
 
     def load(self, input_file, verbose=False):
+        """Load a one-day timetable file.
+        The file is expected to have columns ['Start', 'Duration', and 'Activity']
+        where the start time is HH:MM and the duration is M or H:MM."""
         if input_file is None:
             return
         self.last_read[input_file] = os.stat(input_file).st_mtime
@@ -105,6 +108,8 @@ class Day():
             pending = None
             incoming = []
             for row in csv.DictReader(instream):
+                if 'Start' not in row:
+                    print("Warning: no Start in row", row, "from file", input_file)
                 start = datetime.datetime.combine(today, as_time(row['Start']))
                 if pending:
                     prev_start, prev_activity = pending
