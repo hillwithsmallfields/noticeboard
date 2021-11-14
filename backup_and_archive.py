@@ -33,15 +33,15 @@ def backup_and_archive(force=False):
     """Take backups, and make an archive, if today is one of the specified days."""
     global CONFIGURATION
     CONFIGURATION = lifehacking_config.load_config()
-    common_backups = CONF('backups', 'common-backups')
-    print("common_backups", common_backups)
-    if common_backups == "" or common_backups.startswith("$"):
-        common_backups = os.path.expandvars("$HOME/common-backups")
-        print("common_backups now", common_backups)
+    synced_snapshots = CONF('backups', 'common-backups')
+    print("synced_snapshots", synced_snapshots)
+    if synced_snapshots == "" or synced_snapshots.startswith("$"):
+        synced_snapshots = os.path.expandvars("$HOME/common-backups")
+        print("synced_snapshots now", synced_snapshots)
     daily_backup_template = CONF('backups', 'daily-backup-template')
     weekly_backup_template = CONF('backups', 'weekly-backup-template')
     today = datetime.date.today()
-    make_tarball(os.path.join(common_backups, daily_backup_template % today.isoformat()),
+    make_tarball(os.path.join(synced_snapshots, daily_backup_template % today.isoformat()),
                  os.path.expandvars("$COMMON"),
                  "org")
     weekly_backup_day = CONF('backups', 'weekly-backup-day')
@@ -51,7 +51,7 @@ def backup_and_archive(force=False):
         except ValueError:
             weekly_backup_day = time.strptime(weekly_backup_day, "%a").tm_wday
     if force or today.weekday() == weekly_backup_day:
-        make_tarball(os.path.join(common_backups, weekly_backup_template % today.isoformat()),
+        make_tarball(os.path.join(synced_snapshots, weekly_backup_template % today.isoformat()),
                      os.path.expandvars("$HOME"), "common")
     if force or today.day == int(CONF('backups', 'monthly-backup-day')):
         backup_isos_directory = CONF('backups', 'backup_isos_directory')
@@ -65,8 +65,8 @@ def backup_and_archive(force=False):
                          CONF('backups', 'projects-dir'),
                          CONF('backups', 'projects-user'))
             files_to_backup = [
-                latest_file_matching(os.path.join(common_backups, daily_backup_template % "*")),
-                latest_file_matching(os.path.join(common_backups, weekly_backup_template % "*")),
+                latest_file_matching(os.path.join(synced_snapshots, daily_backup_template % "*")),
+                latest_file_matching(os.path.join(synced_snapshots, weekly_backup_template % "*")),
                 # too large for genisoimage:
                 # "/tmp/music.tgz",
                 "/tmp/github.tgz"]

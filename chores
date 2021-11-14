@@ -7,6 +7,6 @@ export DOWNLOADS=$HOME/Downloads
 export ISOS=$HOME/isos
 export PRIVATEHTML=$HOME/private_html
 export SCRATCH=$HOME/scratch
-export COMMONBACKUPS=$HOME/common-backups
+export SYNCEDSNAPSHOTS=$HOME/common-snapshots
 
 ./chores.py $*
