@@ -58,6 +58,8 @@ backups:
         daily-backup-template: org-%s.tgz
         projects-dir: ~/open-projects/github.com
         projects-user: hillwithsmallfields
+        monthly-backup-day: 1
+        weekly-backup-day: Wednesday
         weekly-backup-template: common-%s.tgz
 timetables:
         default-timetable: timetable.csv

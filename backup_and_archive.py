@@ -1,11 +1,16 @@
 #!/usr/bin/python3
 
+import argparse
 import datetime
+import glob
 import os
+import time
 
 import lifehacking_config
 
 CONFIGURATION = {}
+
+DVD_FULL = 4700000000
 
 def CONF(*keys):
     return lifehacking_config.lookup(CONFIGURATION, *keys)
@@ -16,23 +21,44 @@ def make_tarball(tarball, parent_directory, of_directory):
         print("backup command is", command)
         os.system(command)
 
-def backup_and_archive():
+def latest_file_matching(template):
+    files = glob.glob(template)
+    return files and sorted(files, key=os.path.getmtime)[-1]
+
+def get_next_backup_file():
+    """Stub for working through a round-robin of extra files to back up."""
+    return None
+
+def backup_and_archive(force=False):
+    """Take backups, and make an archive, if today is one of the specified days."""
     global CONFIGURATION
     CONFIGURATION = lifehacking_config.load_config()
     common_backups = CONF('backups', 'common-backups')
+    print("common_backups", common_backups)
+    if common_backups == "" or common_backups.startswith("$"):
+        common_backups = os.path.expandvars("$HOME/common-backups")
+        print("common_backups now", common_backups)
     daily_backup_template = CONF('backups', 'daily-backup-template')
     weekly_backup_template = CONF('backups', 'weekly-backup-template')
     today = datetime.date.today()
     make_tarball(os.path.join(common_backups, daily_backup_template % today.isoformat()),
                  os.path.expandvars("$COMMON"),
                  "org")
-    weekly_backup_day = 2    # Wednesday, probably the least likely day to be on holiday and not using the computer
-    if today.weekday() == weekly_backup_day:
+    weekly_backup_day = CONF('backups', 'weekly-backup-day')
+    if not isinstance(weekly_backup_day, int):
+        try:
+            weekly_backup_day = time.strptime(weekly_backup_day, "%A").tm_wday
+        except ValueError:
+            weekly_backup_day = time.strptime(weekly_backup_day, "%a").tm_wday
+    if force or today.weekday() == weekly_backup_day:
         make_tarball(os.path.join(common_backups, weekly_backup_template % today.isoformat()),
                      os.path.expandvars("$HOME"), "common")
-    if today.day == 1:
+    if force or today.day == int(CONF('backups', 'monthly-backup-day')):
         backup_isos_directory = CONF('backups', 'backup_isos_directory')
+        if backup_isos_directory == "" or backup_isos_directory.startswith("$"):
+            backup_isos_directory = os.path.expandvars("$HOME/isos")
         monthly_backup_name = os.path.join(backup_isos_directory, CONF('backups', 'backup-iso-format') % today.isoformat())
+        # this assumes it's a different filename each time:
         if not os.path.isfile(monthly_backup_name):
             # make_tarball("/tmp/music.tgz", os.path.expandvars("$HOME"), "Music")
             make_tarball("/tmp/github.tgz",
@@ -57,6 +83,39 @@ def backup_and_archive():
                 sig = digest + ".sig"
                 if os.path.isfile(sig):
                     files_to_backup.append(sig)
-            print("Time to take a monthly backup of", files_to_backup, "into", monthly_backup_name)
-            os.system("genisoimage -o %s %s" % (monthly_backup_name, " ".join(files_to_backup)))
+            # We might have room to back up some more files:
+            stuffed = False
+            while True:
+                os.system("genisoimage -o %s %s" % (monthly_backup_name, " ".join(files_to_backup)))
+                if stuffed:
+                    # we exceeded the limit last time, and have now
+                    # removed the file that took us over the limit, so
+                    # now we're full:
+                    break
+                if os.path.getsize(monthly_backup_name) >= DVD_FULL:
+                    # we have just exceeded the limit this time, so back off one file:
+                    files_to_backup = files_to_backup[:-1]
+                    stuffed = True
+                else:
+                    # pick something else to include in the backup,
+                    # maybe on a round robin system:
+                    next_file_to_backup = get_next_backup_file()
+                    if next_file_to_backup:
+                        files_to_backup.append(next_file_to_backup)
+                    else:
+                        # we couldn't find anything else to include in
+                        # the backup:
+                        break
             print("made backup in", monthly_backup_name)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force", "-f",
+                        action='store_true',
+                        help="""Make a backup even if it's not backup day.""")
+    args = parser.parse_args()
+
+    backup_and_archive(args.force)
+
+if __name__ == "__main__":
+    main()
