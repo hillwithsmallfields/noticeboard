@@ -54,7 +54,7 @@ backups:
         archive: $ARCHIVE
         backup-iso-format: backup-%s.iso
         backup_isos_directory: $ISOS/backups
-        synced-snapshots: $SYNCEDBACKUPS
+        synced-snapshots: $SYNCEDSNAPSHOTS
         daily-backup-template: org-%s.tgz
         projects-dir: ~/open-projects/github.com
         projects-user: hillwithsmallfields

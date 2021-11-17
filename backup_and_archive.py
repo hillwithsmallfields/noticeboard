@@ -33,16 +33,16 @@ def backup_and_archive(force=False):
     """Take backups, and make an archive, if today is one of the specified days."""
     global CONFIGURATION
     CONFIGURATION = lifehacking_config.load_config()
-    synced_snapshots = CONF('backups', 'common-backups')
+    synced_snapshots = CONF('backups', 'synced-snapshots')
     print("synced_snapshots", synced_snapshots)
     if synced_snapshots == "" or synced_snapshots.startswith("$"):
-        synced_snapshots = os.path.expandvars("$HOME/common-backups")
+        synced_snapshots = os.path.expandvars("$HOME/Sync-snapshots")
         print("synced_snapshots now", synced_snapshots)
     daily_backup_template = CONF('backups', 'daily-backup-template')
     weekly_backup_template = CONF('backups', 'weekly-backup-template')
     today = datetime.date.today()
     make_tarball(os.path.join(synced_snapshots, daily_backup_template % today.isoformat()),
-                 os.path.expandvars("$COMMON"),
+                 os.path.expandvars("$SYNCED"),
                  "org")
     weekly_backup_day = CONF('backups', 'weekly-backup-day')
     if not isinstance(weekly_backup_day, int):

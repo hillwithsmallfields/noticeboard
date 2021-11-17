@@ -7,6 +7,8 @@ export DOWNLOADS=$HOME/Downloads
 export ISOS=$HOME/isos
 export PRIVATEHTML=$HOME/private_html
 export SCRATCH=$HOME/scratch
-export SYNCEDSNAPSHOTS=$HOME/common-snapshots
+export SYNCEDSNAPSHOTS=$HOME/Sync-snapshots
+
+source env/bin/activate
 
 ./chores.py $*
