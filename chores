@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source env/bin/activate
+
 ./update_repos.py
 
 export ARCHIVE=$HOME/archive
@@ -8,7 +10,5 @@ export ISOS=$HOME/isos
 export PRIVATEHTML=$HOME/private_html
 export SCRATCH=$HOME/scratch
 export SYNCEDSNAPSHOTS=$HOME/Sync-snapshots
-
-source env/bin/activate
 
 ./chores.py $*
