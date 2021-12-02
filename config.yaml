@@ -53,14 +53,15 @@ weather:
 backups:
         archive: $ARCHIVE
         backup-iso-format: backup-%s.iso
-        backup_isos_directory: $ISOS/backups
+        backup-isos-directory: $ISOS/backups
         synced-snapshots: $SYNCEDSNAPSHOTS
         daily-backup-template: org-%s.tgz
+        gpg-recipient: jcg.sturdy@gmail.com
         projects-dir: ~/open-projects/github.com
         projects-user: hillwithsmallfields
         monthly-backup-day: 1
         weekly-backup-day: Wednesday
-        weekly-backup-template: synced-%s.tgz
+        weekly-backup-template: Sync-%s.tgz
 timetables:
         default-timetable: timetable.csv
         timetables-dir: $SYNCED/timetables
