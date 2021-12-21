@@ -4,6 +4,7 @@ import argparse
 import datetime
 import glob
 import os
+import subprocess
 import time
 
 import lifehacking_config
@@ -17,12 +18,23 @@ def CONF(*keys):
 
 def make_tarball(tarball, of_directory):
     if not os.path.isfile(tarball):
-        command = "tar cz -C %s %s > %s" % (os.path.dirname(of_directory),
+        os.system("tar cz -C %s %s > %s" % (os.path.dirname(of_directory),
                                             os.path.basename(of_directory),
-                                            tarball)
+                                            tarball))
+
+def write_iso_to_dvd(iso):
+    """Write a DVD image to the drive if there's a blank disk in it."""
+    command = "wodim " + iso
+    if ("""wodim: Cannot read TOC header"""
+        in subprocess.run(["wodim", "-toc"],
+                          check=False, # suppress exception
+                          capture_output=True).stderr):
         os.system(command)
+    else:
+        print("Please put a blank DVD in the drive and run:", command)
 
 def latest_file_matching(template):
+    """Return the name of the most recently modified file matching the glob template."""
     files = glob.glob(template)
     return files and sorted(files, key=os.path.getmtime)[-1]
 
@@ -94,6 +106,7 @@ def backup_to_dvd(synced_snapshots,
         print("made backup in", monthly_backup_name,
               "with size", backup_size,
               "bytes which is", backup_size / (1024 * 1024), "Mib")
+    return monthly_backup_name
 
 def backup_and_archive(force=False):
     """Take backups, and make an archive, if today is one of the specified days."""
@@ -120,7 +133,10 @@ def backup_and_archive(force=False):
     if force or today.day == int(CONF('backups', 'monthly-backup-day')):
         if 'ISOS' not in os.environ:
             os.environ['ISOS'] = os.path.expandvars("$HOME/isos")
-        backup_to_dvd(synced_snapshots, daily_backup_template, weekly_backup_template)
+        iso = backup_to_dvd(synced_snapshots, daily_backup_template, weekly_backup_template)
+        print("backup writing flag is", CONF('backups', 'write-iso-to-dvd'))
+        if CONF('backups', 'write-iso-to-dvd'):
+            write_iso_to_dvd(iso)
 
 def main():
     """Make snapshots and archives."""
