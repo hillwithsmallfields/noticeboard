@@ -112,7 +112,8 @@ class NoticeBoardHardware(object):
         self.moving_steps = 0
         self.pir_seen_at = 0
         self.porch_pir_seen_at = 0
-        self.audio_process = None
+        self.music_process = None
+        self.speech_process = None
         self.user_status = 'unknown'
         self.temperature = None
         self.camera = picamera.PiCamera()
@@ -201,7 +202,7 @@ class NoticeBoardHardware(object):
         GPIO.output(pin_speaker, GPIO.HIGH)
         # TODO: first check there's no existing process
         # TODO: maybe we should have a sound queue?
-        self.audio_process = subprocess.Popen(
+        self.speech_process = subprocess.Popen(
             # TODO: fill in params
         )
 
@@ -210,7 +211,7 @@ class NoticeBoardHardware(object):
         That goes via this module so we can control the speaker power switch."""
         GPIO.output(pin_speaker, GPIO.HIGH)
         # TODO: start the player process asynchronously, switch speaker off at end
-        self.audio_process = subprocess.Popen(
+        self.music_process = subprocess.Popen(
             # TODO: fill in params
         )
 
@@ -246,11 +247,18 @@ class NoticeBoardHardware(object):
             else:
                 self.moving_steps += 1
 
-        if self.audio_process:
-            process_result = self.audio_process.poll()
+        if self.music_process:
+            process_result = self.music_process.poll()
+            if process_result:
+                if self.speech_process is None:
+                    GPIO.output(pin_speaker, GPIO.LOW)
+                self.music_process = None
+
+        if self.speech_process:
+            process_result = self.speech_process.poll()
             if process_result:
                 GPIO.output(pin_speaker, GPIO.LOW)
-                self.audio_process = None
+                self.speech_process = None
 
         # TODO: read the temperature from pin_temperature into self.temperature
 
