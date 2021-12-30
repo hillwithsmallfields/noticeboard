@@ -54,6 +54,7 @@ backups:
         archive: $ARCHIVE
         backup-iso-format: backup-%s.iso
         backup-isos-directory: $ISOS/backups
+        write-iso-to-dvd: true
         synced-snapshots: $SYNCEDSNAPSHOTS
         daily-backup-template: org-%s.tgz
         gpg-recipient: jcg.sturdy@gmail.com
