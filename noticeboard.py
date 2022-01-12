@@ -8,7 +8,7 @@ import datetime
 import functools
 import os
 import picamera
-import process
+import subprocess
 import re
 import select
 import shlex
