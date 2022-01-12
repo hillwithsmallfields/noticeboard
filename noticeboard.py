@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Program for my noticeboard hardware
 
@@ -288,7 +288,7 @@ class NoticeBoardHardware(object):
         PIR_active = GPIO.input(pin_pir)
         keyboard_extended = self.extended()
         keyboard_retracted = self.retracted()
-        print("12V power on:", power)
+        print("12V power on:", self.power)
         print("PIR:", PIR_active)
         print("Keyboard status:", self.keyboard_status)
 
