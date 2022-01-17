@@ -15,7 +15,7 @@ PIN_LAMP_LEFT  = 12 # 32
 PIN_LAMP_RIGHT = 13 # 33
 PIN_PORCH_LAMP =  2 # 3
 
-BCM_INPUT_PINS_BY_NAME = {
+INPUT_PINS_BY_NAME = {
     'pir': (PIN_PIR, 11),
     'retracted': (PIN_RETRACTED, 23),
     'extended': (PIN_EXTENDED, 29),
@@ -23,7 +23,7 @@ BCM_INPUT_PINS_BY_NAME = {
     'temperature': (PIN_TEMPERATURE, 7)
 }
 
-BCM_OUTPUT_PINS_BY_NAME = {
+OUTPUT_PINS_BY_NAME = {
     'psu': (PIN_PSU, 24),
     'speaker': (PIN_SPEAKER, 26),
     'motor_a': (PIN_MOTOR_A, 16),

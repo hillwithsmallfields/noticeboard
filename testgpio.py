@@ -4,6 +4,7 @@ import argparse
 import cmd
 import time
 import RPi.GPIO as GPIO
+import pins
 
 class GPIOtestShell(cmd.Cmd):
 
@@ -17,23 +18,38 @@ class GPIOtestShell(cmd.Cmd):
         self.mark = mark
         self.space = space
         self.active_pin = None
+        self.active_board = None
         self.watch_pin = None
+        self.watch_board = None
         self.state = 0
 
     def postcmd(self, stop, _line):
         return stop
 
-    def do_pin(self, *args):
+    def do_pin(self, pin_text, *_args):
         """Set which pin we are experimenting with."""
-        self.active_pin = int(*args[0])
+        self.active_pin, self.active_board = (pins.OUTPUT_PINS_BY_NAME[pin_text]
+                                              if pin_text in pins.OUTPUT_PINS_BY_NAME
+                                              else (int(pin_text), None))
         GPIO.setup(self.active_pin, GPIO.OUT)
         return False
 
-    def do_watch(self, *args):
+    def do_watch(self, pin_text, *_args):
         """Set which pin we are watching."""
-        self.watch_pin = int(*args[0])
+        self.watch_pin, self.watch_board = (pins.INPUT_PINS_BY_NAME[pin_text]
+                                            if pin_text in pins.INPUT_PINS_BY_NAME
+                                            else (int(pin_text), None))
         GPIO.setup(self.watch_pin, GPIO.IN)
         return False
+
+    def do_names(self, *_args):
+        """List the pin names."""
+        print("Input pins:")
+        for key, value in pins.INPUT_PINS_BY_NAME.items():
+            print("  ", key, "BCM", value[0], "board", value[1])
+        print("Output pins:")
+        for key, value in pins.OUTPUT_PINS_BY_NAME.items():
+            print("  ", key, "BCM", value[0], "board", value[1])
 
     def do_on(self, *_args):
         """Turn the active pin on."""
@@ -61,7 +77,6 @@ class GPIOtestShell(cmd.Cmd):
     def do_read(self, *_args):
         """Read all the pins."""
         for pin in range(1,26):
-            print("Trying pin", pin)
             GPIO.setup(pin, GPIO.IN)
             print("pin", pin, "is", GPIO.input(pin))
         if self.active_pin is not None:
