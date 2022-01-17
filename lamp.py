@@ -1,9 +1,4 @@
-# we may be running on a non-Pi while developing this program
-try:
-    import RPi.GPIO as GPIO
-except ModuleNotFoundError:
-    print("Error importing RPi.GPIO!")
-    import fakeGPIO as GPIO
+import RPi.GPIO as GPIO
 
 class Lamp(object):
 
@@ -13,7 +8,8 @@ class Lamp(object):
         self.gpio = pin
         self.target = 0
         self.current = 0
-        self.pwm = GPIO.PWM(self.gpio, 1000)
+        print("making Lamp with gpio", self.gpio)
+        self.pwm = GPIO.PWM(self.gpio, 1000, 42)
         GPIO.setup(self.gpio, GPIO.OUT, initial=GPIO.LOW)
 
     def set(self, brightness):

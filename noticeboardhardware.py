@@ -1,13 +1,5 @@
-# we may be running on a non-Pi while developing this program
-try:
-    import RPi.GPIO as GPIO
-except ModuleNotFoundError:
-    print("Error importing RPi.GPIO!")
-
-try:
-    import picamera
-except ModuleNotFoundError:
-    print("Error importing picamera!")
+import RPi.GPIO as GPIO
+import picamera
 
 from lamp import Lamp
 
