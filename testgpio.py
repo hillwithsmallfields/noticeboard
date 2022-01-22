@@ -42,6 +42,24 @@ class GPIOtestShell(cmd.Cmd):
         GPIO.setup(self.watch_pin, GPIO.IN)
         return False
 
+    def do_mark(self, mark_text):
+        """Set the marking time."""
+        self.mark = int(mark_text)
+
+    def do_space(self, space_text):
+        """Set the spacing time."""
+        self.space = int(space_text)
+
+    def do_blink(self, count_text, *_args):
+        """Blink the pin a number of times."""
+        for i in range(int(count_text)):
+            print("on", i)
+            GPIO.output(self.active_pin, 1)
+            time.sleep(self.mark)
+            print("off", i)
+            GPIO.output(self.active_pin, 0)
+            time.sleep(self.space)
+
     def do_names(self, *_args):
         """List the pin names."""
         print("Input pins:")
