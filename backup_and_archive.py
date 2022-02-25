@@ -28,6 +28,7 @@ def write_iso_to_dvd(iso):
     if ("""wodim: Cannot read TOC header"""
         in subprocess.run(["wodim", "-toc"],
                           check=False, # suppress exception
+                          text=True,
                           capture_output=True).stderr):
         os.system(command)
     else:
