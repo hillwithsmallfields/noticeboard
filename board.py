@@ -28,12 +28,17 @@ def read_table(filename, begin, end):
         rows = list(csv.reader(instream))
     return rows[begin:end or len(rows)]
 
-def align_cells(table, padding, vgrid):
+def adjust_cell(cell, width, padding, extend):
+    if extend and cell == extend:
+        cell = cell[0] * width
+    return cell.ljust(width, padding)
+
+def align_cells(table, padding, vgrid, extend=None):
     """Align the cells of a table for display as monospaced character graphics.
     The input is a list of lists of strings, and the result is a list of strings."""
     widths = [max([len(cell) for cell in column])
               for column in zip(*table)]
-    return "\n".join([vgrid.join([cell.ljust(widths[icol], padding)
+    return "\n".join([vgrid.join([adjust_cell(cell, widths[icol], padding, extend)
                                   for icol, cell in enumerate(row)])
                       for row in table]) + "\n"
 
@@ -69,6 +74,9 @@ def main():
     parser.add_argument("--pad", "-p",
                         type=str, default=" ",
                         help="""Pad cells with this character.""")
+    parser.add_argument("--extend", "-x",
+                        default="---",
+                        help="""Stretch cells equal to this string.""")
     parser.add_argument("--vgrid", "-V",
                         type=str, default=" ",
                         help="""Use this character between columns.""")
@@ -93,7 +101,9 @@ def main():
     write_table(align_cells(([list(reversed(row)) for row in table]
                              if args.reversed
                              else table),
-                            args.pad[0], args.vgrid[0]),
+                            args.pad[0],
+                            args.vgrid[0],
+                            args.extend),
                 args.output, args.html,
                 args.title, args.font_size)
 
