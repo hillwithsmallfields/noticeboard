@@ -1,12 +1,32 @@
 Function,Wire,From,To,Status,Wire colour
-Ground,w0,p9,IC4p10,,multiple
+Ground,w0,p9,IC3p10,,
 Ground,w1,p39,bus,,
 Ground,w2,bus,C7p3,,
 Ground,w3,bus,C6p3,,
+Ground,w37,C2p3,IC1p13,done,green
+Ground,w38,IC1p13,IC1p10,done,red
+Ground,w39,IC1p10,IC2p13,done,yellow
 Ground,w4,bus,C5p3,,
+Ground,w41,C2p3,IC1p10,done,yellow
+Ground,w42,IC1p10,IC1p4,done,red
+Ground,w40,IC2p13,IC2p10,done,orange
+Ground,w43,IC1p4,IC1p7,done,red
+Ground,w44,IC1p7,IC2p1,done,bare
+Ground,w45,IC2p1,IC2p4,done,red
+Ground,w46,IC2p4,IC2p7,done,red
+Ground,w47,IC3p13,IC3p10,,
+Ground,w48,IC3p10,IC4p13,done,blue
+Ground,w49,IC4p10,IC4p7,done,brown
+Ground,w50,IC4p7,IC4p4,,
+Ground,w51,IC4p4,IC4p1,,
+Ground,w52,IC4p1,IC3p7,,
+Ground,w53,IC3p7,IC3p4,,
+Ground,w54,IC3p4,IC3p1,,
+Ground,w55,IC4p7,C8p3,,
 5V power to PIR,w5,C2p2,C7p1,,
 5V,w6,C2p1,IC1p14,done,purple
 5V,w7,C2p1,C1p1,,
+5V,w36,IC1p14,IC2p14,done,purple
 5V,w8,bus,C9p4,,
 5V,w9,C2p1,IC4p14,done,bare
 5V,w10,C2p2,C5p1,,
