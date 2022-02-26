@@ -1,0 +1,51 @@
+Connector,Shell colour,JST wire,Function,wire
+C1,red,,tray motor,
+C1.1,,yellow,5V out,red
+C1.2,,black,motor B,green
+C1.3,,red,motor A,yellow
+,,,,
+C2,purple,,5V in,
+C2.1,,black,5V in,
+C2.2,,white,5V in,
+C2.3,,red,ground,
+,,,,
+C3,green,,12V in,
+C3.1,,black,12V in,
+C3.2,,white,ground,
+C3.3,,red,ground,
+,,,,
+C4,black/green/red,,board lamps,
+C4.1,,yellow,12V out,brown
+C4.2,,black,right lamp,green/yellow
+C4.3,,red,left lamp,blue
+,,,,
+C5,purple/green,,audio power switch,
+C5.1,,yellow,5V out,
+C5.2,,black,audio power switch,
+C5.3,,red,ground,
+,,,,
+C6,red/blue,,other motor,
+C6.1,,red,motor A,blue
+C6.2,,black,motor B,purple
+C6.3,,yellow,ground,black
+,,,,
+C7,blue,,PIR,
+C7.1,,red,5V out,brown
+C7.2,,black,PIR sense,blue
+C7.3,,yellow,ground,green/yellow
+,,,,
+C8,black,,tray limit switches,
+C8.1,,red,tray retracted,brown
+C8.2,,black,tray extended,blue
+C8.3,,yellow,ground,green/yellow
+,,,,
+C9,white,,porch,
+C9.1,,,lamp,
+C9.2,,,PIR sense,
+C9.3,,,ground,
+C9.4,,,5Vout,
+,,,,
+C10,red/black,,12V PSU switch,
+C10.1,,red,5V out,
+C10.2,,black,12V PSU switch,
+C10.3,,yellow,ground,

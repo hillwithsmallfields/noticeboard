@@ -1,56 +1,57 @@
-Function,Wire,From,To,Status,Wire colour
-Ground,w0,p9,IC1p10,done,yellow
-Ground,w1,p39,bus,done,bare
-Ground,w3,bus,C6p3,done,green
-Ground,w4,C2p3,IC3p13,done,green
-Ground,w5,IC3p13,IC3p10,done,red
-Ground,w6,IC3p10,IC4p13,done,yellow
-Ground,w7,bus,C5p3,done,yellow
-Ground,w8,C2p3,IC3p10,done,yellow
-Ground,w9,IC3p10,IC3p4,done,red
-Ground,w10,IC4p13,IC4p10,done,orange
-Ground,w11,IC3p4,IC3p7,done,red
-Ground,w12,IC3p7,IC4p1,done,bare
-Ground,w13,IC4p1,IC4p4,done,red
-Ground,w14,IC4p4,IC4p7,done,red
-Ground,w15,IC1p13,IC1p10,done,yellow
-Ground,w16,IC1p10,IC2p13,done,blue
-Ground,w17,IC2p10,IC2p7,done,brown
-Ground,w18,IC2p7,IC2p4,done,yellow
-Ground,w19,IC2p4,IC2p1,done,yellow
-Ground,w20,IC2p1,IC1p7,done,yellow
-Ground,w21,IC1p7,IC1p4,done,yellow
-Ground,w22,IC1p4,IC1p1,done,yellow
-Ground,w23,IC2p7,C8p3,done,blue
-5V power to PIR,w24,C2p2,C7p1,done,white
-5V,w25,C2p1,IC3p14,done,purple
-5V,w26,C2p1,C1p1,done,green
-5V,w27,IC3p14,IC4p14,done,purple
-5V,w28,bus,C9p4,done,white
-5V,w29,C2p1,IC2p14,done,bare
-5V,w30,C2p2,C5p1,done,green
-12V,w31,C3p1,C4p1,done,orange
-Audio power switch 3V3,w32,p26,IC3p9,,
-Audio power switch 5V,w33,IC3p8,C10p2,,
-PIR sense 3V3,w34,IC1p3,p11,,
-PIR sense 5V,w35,C7p2,IC2p2,,
-PSU switch 3V3,w36,p24,IC3p12,,
-PSU switch 5V,w37,IC3p11,C5p2,,
-Porch PIR sense 3V3,w38,IC1p6,p37,,
-Porch PIR sense 5V,w39,C9p2,IC1p5,,
-Porch lamp 5V,w40,IC2p11,Q3p1,,
-Porch lamp current,w41,C9p1,Q3p2,,
-Tray extended 5V,w42,C8p2,IC2p9,,
-Tray retracted 5V,w43,C8p1,IC2p12,,
-left lamp 5V,w44,IC4p3,Q1p1,,
-left lamp current,w45,Q1p2,C4p3,,
-right lamp 3V3,w46,p33,IC4p5,,
-right lamp 5V,w47,IC4p6,Q2p1,,
-right lamp current,w48,Q2p2,C4p2,,
-motor A tray retract 5V,w49,IC3p3,C1p3,,
-motor B tray extend 3V3,w50,p18,IC3p5,,
-motor B tray extend 5V,w51,IC3p6,C1p2,,
-Spare motor A 3V3,w52,p13,IC1p2,,
-Spare motor A 5V,w53,IC1p3,C6p1,,
-Spare motor B 3V3,w54,p15,IC1p5,,
-Spare motor B 5V,w55,IC1p6,C6p2,,
+Function,Wire,From,To,Status,Wire colour,
+Ground,w0,p9,IC1p10,done,yellow,
+Ground,w1,p39,bus,done,bare,
+Ground,w2,bus,C6p3,done,green,
+Ground,w3,C2p3,IC3p13,done,green,
+Ground,w4,IC3p13,IC3p10,done,red,
+Ground,w5,IC3p10,IC4p13,done,yellow,
+Ground,w6,bus,C5p3,done,yellow,
+Ground,w7,C2p3,IC3p10,done,yellow,
+Ground,w8,IC3p10,IC3p4,done,red,
+Ground,w9,IC4p13,IC4p10,done,orange,
+Ground,w10,IC3p4,IC3p7,done,red,
+Ground,w11,IC3p7,IC4p1,done,bare,
+Ground,w12,IC4p1,IC4p4,done,red,
+Ground,w13,IC4p4,IC4p7,done,red,
+Ground,w14,IC1p13,IC1p10,done,yellow,
+Ground,w15,IC1p10,IC2p13,done,blue,
+Ground,w16,IC2p10,IC2p7,done,brown,
+Ground,w17,IC2p7,IC2p4,done,yellow,
+Ground,w18,IC2p4,IC2p1,done,yellow,
+Ground,w19,IC2p1,IC1p7,done,yellow,
+Ground,w20,IC1p7,IC1p4,done,yellow,
+Ground,w21,IC1p4,IC1p1,done,yellow,
+Ground,w22,IC2p7,C8p3,done,blue,
+Ground,w23,bus,Q3p3,,,
+5V power to PIR,w24,C2p2,C7p1,done,green,
+5V,w25,C2p1,IC3p14,done,purple,
+5V,w26,C2p1,C1p1,done,green,
+5V,w27,IC3p14,IC4p14,done,purple,
+5V,w28,bus,C9p4,done,white,
+5V,w29,C2p1,IC2p14,done,bare,
+5V,w30,C2p2,C5p1,done,green,
+12V,w31,C3p1,C4p1,done,orange,
+Audio power switch 3V3,w32,p26,IC3p9,done,orange,
+Audio power switch 5V,w33,IC3p8,C10p2,done,green,
+PIR sense 3V3,w34,IC1p3,p11,done,white,
+PIR sense 5V,w35,C7p2,IC2p2,done,red,
+PSU switch 3V3,w36,p24,IC3p12,done,white,
+PSU switch 5V,w37,IC3p11,C5p2,done,green,
+Porch PIR sense 3V3,w38,IC2p6,p37,done,white,
+Porch PIR sense 5V,w39,C9p2,IC2p5,done,yellow,
+Porch lamp 5V,w40,IC1p11,Q3p1,,,
+Porch lamp current,w41,C9p1,Q3p2,,,
+Tray extended 5V,w42,C8p2,IC2p9,done,red,needs pullup
+Tray retracted 5V,w43,C8p1,IC2p12,done,white,needs pullup
+left lamp 5V,w44,IC4p3,Q1p1,,,
+left lamp current,w45,Q1p2,C4p3,,,
+right lamp 3V3,w46,p33,IC4p5,,,
+right lamp 5V,w47,IC4p6,Q2p1,,,
+right lamp current,w48,Q2p2,C4p2,,,
+motor A tray retract 5V,w49,IC3p3,C1p3,,,
+motor B tray extend 3V3,w50,p18,IC3p5,,,
+motor B tray extend 5V,w51,IC3p6,C1p2,,,
+Spare motor A 3V3,w52,p13,IC1p2,,,
+Spare motor A 5V,w53,IC1p3,C6p1,,,
+Spare motor B 3V3,w54,p15,IC1p5,,,
+Spare motor B 5V,w55,IC1p6,C6p2,,,
