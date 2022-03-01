@@ -19,8 +19,10 @@ class GPIOtestShell(cmd.Cmd):
         self.space = space
         self.active_pin = None
         self.active_board = None
+        self.active_description = None
         self.watch_pin = None
         self.watch_board = None
+        self.watch_description = None
         self.state = 0
 
     def postcmd(self, stop, _line):
@@ -28,17 +30,21 @@ class GPIOtestShell(cmd.Cmd):
 
     def do_pin(self, pin_text, *_args):
         """Set which pin we are experimenting with."""
-        self.active_pin, self.active_board = (pins.OUTPUT_PINS_BY_NAME[pin_text]
-                                              if pin_text in pins.OUTPUT_PINS_BY_NAME
-                                              else (int(pin_text), None))
+        (self.active_pin,
+         self.active_board,
+         self.active_description) = (pins.OUTPUT_PINS_BY_NAME[pin_text]
+                                     if pin_text in pins.OUTPUT_PINS_BY_NAME
+                                     else (int(pin_text), None))
         GPIO.setup(self.active_pin, GPIO.OUT)
         return False
 
     def do_watch(self, pin_text, *_args):
         """Set which pin we are watching."""
-        self.watch_pin, self.watch_board = (pins.INPUT_PINS_BY_NAME[pin_text]
-                                            if pin_text in pins.INPUT_PINS_BY_NAME
-                                            else (int(pin_text), None))
+        (self.watch_pin,
+         self.watch_board,
+         self.watch_description) = (pins.INPUT_PINS_BY_NAME[pin_text]
+                                    if pin_text in pins.INPUT_PINS_BY_NAME
+                                    else (int(pin_text), None))
         GPIO.setup(self.watch_pin, GPIO.IN)
         return False
 
@@ -111,8 +117,10 @@ class GPIOtestShell(cmd.Cmd):
         GPIO.output(self.active_pin, self.state)
         if self.active_pin is not None:
             print("output pin", self.active_pin, "set to", self.state)
+            print(self.active_description)
         if self.watch_pin is not None:
             print("input pin", self.watch_pin, "is", GPIO.input(self.watch_pin))
+            print(self.watch_description)
 
 def main():
     """GPIO pin test program."""
