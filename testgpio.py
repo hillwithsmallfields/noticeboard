@@ -51,10 +51,12 @@ class GPIOtestShell(cmd.Cmd):
     def do_mark(self, mark_text):
         """Set the marking time."""
         self.mark = int(mark_text)
+        return False
 
     def do_space(self, space_text):
         """Set the spacing time."""
         self.space = int(space_text)
+        return False
 
     def do_blink(self, count_text, *_args):
         """Blink the pin a number of times."""
@@ -65,6 +67,7 @@ class GPIOtestShell(cmd.Cmd):
             print("off", i)
             GPIO.output(self.active_pin, 0)
             time.sleep(self.space)
+        return False
 
     def do_names(self, *_args):
         """List the pin names."""
@@ -74,6 +77,7 @@ class GPIOtestShell(cmd.Cmd):
         print("Output pins:")
         for key, value in pins.OUTPUT_PINS_BY_NAME.items():
             print("  ", key, "BCM", value[0], "board", value[1])
+        return False
 
     def do_on(self, *_args):
         """Turn the active pin on."""
@@ -123,6 +127,7 @@ class GPIOtestShell(cmd.Cmd):
                              for p in input_pins]))
             time.sleep(delay)
             count -= 1
+        return False
 
     def do_read(self, *_args):
         """Read all the pins."""
