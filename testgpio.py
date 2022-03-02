@@ -81,11 +81,19 @@ class GPIOtestShell(cmd.Cmd):
         self.apply_state()
         return False
 
+    def do_1(self, *args):
+        """Turn the active pin on."""
+        return self.do_on(*args)
+
     def do_off(self, *_args):
         """Turn the active pin off."""
         self.state = 0
         self.apply_state()
         return False
+
+    def do_0(self, *args):
+        """Turn the active pin off."""
+        return self.do_off(*args)
 
     def do_scan(self, *_args):
         """Scan all the pins."""
