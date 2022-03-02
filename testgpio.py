@@ -99,12 +99,11 @@ class GPIOtestShell(cmd.Cmd):
         return False
 
     def do_monitor(self,
-                   count_text="16",
-                   delay_text="1",
-                   *_args):
+                   *args_text):
         """Watch all the input pins."""
-        count = int(count_text)
-        delay = float(delay_text)
+        args = args_text.split()
+        count = int(args[0]) if len(args) >= 1 else 60
+        delay = float(args[1]) if len(args) >= 2 else 1.0
         input_pins = [(pin_name,
                        pins.OUTPUT_PINS_BY_NAME[pin_name][0])
                       for pin_name in sorted(pins.OUTPUT_PINS_BY_NAME.keys())]
