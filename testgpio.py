@@ -98,6 +98,25 @@ class GPIOtestShell(cmd.Cmd):
             time.sleep(self.space)
         return False
 
+    def do_monitor(self,
+                   count_text="16",
+                   delay_text="1",
+                   *_args):
+        """Watch all the input pins."""
+        count = int(count_text)
+        delay = float(delay_text)
+        input_pins = [(pin_name,
+                       pins.OUTPUT_PINS_BY_NAME[pin_name][0])
+                      for pin_name in sorted(pins.OUTPUT_PINS_BY_NAME.keys())]
+        for pin in input_pins:
+            GPIO.setup(pin[1], GPIO.IN)
+        while count > 0:
+            print("; ".join(["%s: %d" % (p[0],
+                                         GPIO.input(p[1]))
+                             for p in input_pins]))
+            time.sleep(delay)
+            count -= 1
+
     def do_read(self, *_args):
         """Read all the pins."""
         for pin in range(1,26):
