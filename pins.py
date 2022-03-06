@@ -16,6 +16,7 @@ PIN_MOTOR_2_B  = 22 # 15
 PIN_LAMP_LEFT  = 12 # 32
 PIN_LAMP_RIGHT = 13 # 33
 PIN_PORCH_LAMP =  2 # 3
+PIN_FANS       =  6 # 31
 
 INPUT_PINS_BY_NAME = {
     'pir': (PIN_PIR, 11, "5V: IC2p2; 3V3: IC2p3"),
