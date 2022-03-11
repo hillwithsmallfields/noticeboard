@@ -9,8 +9,8 @@ PIN_TEMPERATURE = 4 # 7
 # output pins       #
 PIN_PSU        =  8 # 24
 PIN_SPEAKER    =  7 # 26
-PIN_MOTOR_A    = 23 # 16
-PIN_MOTOR_B    = 24 # 17
+PIN_RETRACT    = 23 # 16
+PIN_EXTEND     = 24 # 17
 PIN_MOTOR_2_A  = 27 # 13
 PIN_MOTOR_2_B  = 22 # 15
 PIN_LAMP_LEFT  = 12 # 32
@@ -29,8 +29,8 @@ INPUT_PINS_BY_NAME = {
 OUTPUT_PINS_BY_NAME = {
     'psu': (PIN_PSU, 24, "3V3: IC3p12; 5V: IC3p11"),
     'speaker': (PIN_SPEAKER, 26, "3V3: IC3p9; 5V: IC3p8"),
-    'motor_a': (PIN_MOTOR_A, 16, "3V3: IC3p2; 5V: IC3p3"),
-    'motor_b': (PIN_MOTOR_B, 17, "3V3: IC3p5: 5V: IC3p6"),
+    'retract': (PIN_RETRACT, 16, "3V3: IC3p2; 5V: IC3p3"),
+    'extend': (PIN_EXTEND, 17, "3V3: IC3p5: 5V: IC3p6"),
     'spare_a': (PIN_MOTOR_2_A, 27, "3V3: IC1p2; 5V: IC1p3"),
     'spare_b': (PIN_MOTOR_2_B, 22, "3V3: IC1p5; 5V: IC1p6"),
     'lamp_left': (PIN_LAMP_LEFT, 32, "3V3: IC4p2; 5V: IC4p3"),

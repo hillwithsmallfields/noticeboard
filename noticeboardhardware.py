@@ -35,8 +35,8 @@ class NoticeBoardHardware(object):
         GPIO.setup(pins.PIN_EXTENDED, GPIO.IN)
         GPIO.setup(pins.PIN_PSU, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_SPEAKER, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(pins.PIN_MOTOR_A, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(pins.PIN_MOTOR_B, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.setup(pins.PIN_RETRACT, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.setup(pins.PIN_EXTEND, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_PORCH_LAMP, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_LAMP_LEFT, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_LAMP_RIGHT, GPIO.OUT, initial=GPIO.LOW)
@@ -84,8 +84,8 @@ class NoticeBoardHardware(object):
                 self.moving_steps = 0
             power_on()
             self.keyboard_status = 'extending'
-            GPIO.output(pins.PIN_MOTOR_A, GPIO.LOW)
-            GPIO.output(pins.PIN_MOTOR_B, GPIO.HIGH)
+            GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
+            GPIO.output(pins.PIN_EXTEND, GPIO.HIGH)
 
     def retract(self):
         """Slide the keyboard drawer back in."""
@@ -96,8 +96,8 @@ class NoticeBoardHardware(object):
                 self.moving_steps = 0
             power_on()
             self.keyboard_status = 'retracting'
-            GPIO.output(pins.PIN_MOTOR_B, GPIO.LOW)
-            GPIO.output(pins.PIN_MOTOR_A, GPIO.HIGH)
+            GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
+            GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
 
     def pir_actions(self):
         pass
@@ -144,15 +144,15 @@ class NoticeBoardHardware(object):
         if self.keyboard_status == 'retracting':
             if self.retracted() or self.moving_steps > stepmax:
                 self.keyboard_status = 'retracted'
-                GPIO.output(pins.PIN_MOTOR_B, GPIO.LOW)
-                GPIO.output(pins.PIN_MOTOR_A, GPIO.LOW)
+                GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
+                GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
             else:
                 self.moving_steps += 1
         elif self.keyboard_status == 'extending':
             if self.extended() or self.moving_steps > stepmax:
                 self.keyboard_status = 'extended'
-                GPIO.output(pins.PIN_MOTOR_B, GPIO.LOW)
-                GPIO.output(pins.PIN_MOTOR_A, GPIO.LOW)
+                GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
+                GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
             else:
                 self.moving_steps += 1
 
