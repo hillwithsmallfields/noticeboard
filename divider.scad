@@ -52,4 +52,9 @@ module round_buttress() {
 
 divider();
 translate([195, 0]) round_buttress();
-translate([300, 0]) round_buttress();
+translate([0, divider_height]) {
+     translate([290, 0]) {
+          scale([1, -1])
+          round_buttress();
+     }
+}
