@@ -11,15 +11,15 @@ module motor_plate() {
      difference() {
           square([plate_width, plate_height]);
           translate([plate_width/2, plate_height/2])
-               circle(d=gearbox_diameter, centre=true);
+               circle(d=gearbox_diameter);
           translate([screw_hole_offset, screw_hole_offset])
-               circle(d=screw_hole_diameter, centre=true);
+               circle(d=screw_hole_diameter);
           translate([plate_width - screw_hole_offset, screw_hole_offset])
-               circle(d=screw_hole_diameter, centre=true);
+               circle(d=screw_hole_diameter);
           translate([screw_hole_offset, plate_height - screw_hole_offset])
-               circle(d=screw_hole_diameter, centre=true);
+               circle(d=screw_hole_diameter);
           translate([plate_width - screw_hole_offset, plate_height - screw_hole_offset])
-               circle(d=screw_hole_diameter, centre=true);
+               circle(d=screw_hole_diameter);
      }
 }
 
