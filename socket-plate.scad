@@ -136,11 +136,18 @@ module socket_plate() {
 module top_plate() {
      difference() {
           square([top_plate_length, plate_height]);
+          translate([330, 0]) square([20, 4]);
           translate([15, fixing_height]) screw_holes(5, top_plate_length-30);
           translate([20, 10]) circle(d=10);
           translate([top_plate_length/2, 10]) circle(d=10);
-          translate([top_plate_length*.25, half_height]) cooling_fan();
-          translate([top_plate_length*.75, half_height]) cooling_fan();
+          
+          n_fans = 4;
+          fan_spacing = top_plate_length / n_fans;
+          translate([fan_spacing/2, half_height]) {
+               for (ifan=[0:n_fans-1]) {
+                    translate([fan_spacing*ifan, 0]) cooling_fan();
+               }
+          }
      }
 }
 
