@@ -1,4 +1,4 @@
-plate_length = 350;
+plate_length = 425;
 gap_height = 28;
 overlap = 18;
 plate_height = gap_height + overlap;
@@ -7,7 +7,7 @@ half_height = gap_height / 2;
 
 fixing_height = gap_height + overlap/2;
 
-top_plate_length = 420;
+top_plate_length = 425;
 
 /* TODO:
    button holes
@@ -26,11 +26,13 @@ module ethernet_socket() {
      square([22, 20]);
 }
 
-module usb_socket() {
-     translate([-5, -9]) square([10, 18]);
+module usb_socket(outer) {
+     length = outer ? 15 : 17;
+     width = outer ? 7 : 10;
+     translate([-width/2, -length/2]) square([width, length]);
 }
 
-module usb_sockets(n_sockets) {
+module usb_sockets(outer, n_sockets) {
      for (i=[0:n_sockets-1]) {
           translate([15*i, 0]) usb_socket();
      }
@@ -71,6 +73,30 @@ module din_socket() {
      }
 }
 
+module rocker_switch(outer) {
+     length = outer ? 29 : 35;
+     translate([-length/2, -5.25]) square([length, 10.5]);
+}
+
+module reset_button() {
+     circle(d=13);
+}
+
+module reset_button_mounting() {
+     difference() {
+          circle(d=24);
+          circle(d=7);
+     }
+}
+
+
+module reset_button_spacer() {
+     difference() {
+          circle(d=24);
+          circle(d=13);
+     }
+}
+
 ventilation_hole_diameter = 6;
 ventilation_hole_spacing = ventilation_hole_diameter * 1.5;
 
@@ -102,34 +128,42 @@ module cooling_fan() {
 module screw_holes(n_holes, total_length) {
      spacing = total_length / (n_holes - 1);
      for (i = [0:n_holes]) {
-          echo("i", i)
-          echo("hole at", i * spacing)
           translate([i * spacing, 0]) screw_hole();
      }
 }
 
-module socket_plate() {
+module socket_plate(outer) {
      difference() {
           square([plate_length, plate_height]);
           translate([15, fixing_height]) screw_holes(5, plate_length-30);
-          translate([35, 0]) ethernet_socket();
-          translate([18, 14]) motor_socket();
-          translate([90, 14]) {
+          translate([112, 0]) ethernet_socket();
+          translate([83, 14]) rocker_switch(outer);
+          translate([25, 14]) {
+               circle(d=12);
+               translate([25, 0]) circle(d=12);
+          }
+          translate([165, 14]) {
                mains_inlet();
-               translate([60, 0]) {
-                    mains_outlet();
-                    translate([40, 0]) {
-                         audio_socket();
-                         translate([20,0]) {
-                              usb_sockets(3);
-                              translate([60, 0]) {
-                                   din_socket();
+               translate([50, 0]) {
+                    motor_socket();
+                    translate([25, 0]) {
+                         reset_button();
+                         translate([25, 0]) {
+                              audio_socket();
+                              translate([20,0]) {
+                                   usb_sockets(outer, 3);
+                                   translate([60, 0]) {
+                                        din_socket();
+                                        translate([45, 0]) {
+                                             mains_outlet();
+                                        }
+                                   }
                               }
                          }
                     }
                }
           }
-          translate([290, 8]) ventilation_hole_grid(6, 3);
+          /* translate([290, 8]) ventilation_hole_grid(6, 3); */
      }
 }
 
@@ -151,6 +185,11 @@ module top_plate() {
      }
 }
 
-socket_plate();
-
-translate([0, plate_height + 3]) top_plate();
+socket_plate(true);
+translate([0, plate_height + 3]) socket_plate(false);
+translate([0, (plate_height + 3) * 2]) top_plate();
+translate([plate_length + 15, 15]) {
+     reset_button_mounting();
+     translate([0, 26]) reset_button_spacer();
+     translate([0, 52]) reset_button_spacer();
+}
