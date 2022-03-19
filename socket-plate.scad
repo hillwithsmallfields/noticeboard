@@ -18,8 +18,8 @@ module screw_hole() {
      circle(d=4);
 }
 
-module motor_socket() {
-     circle(d=15);
+module motor_socket(outer) {
+     circle(d=outer ? 25 : 15);
 }
 
 module ethernet_socket() {
@@ -54,11 +54,11 @@ module iec(width, height, corner_depth, hole_spacing) {
 }
 
 module mains_inlet() {
-     iec(26, 18, 5, 40);
+     iec(26, 20, 5, 40);
 }
 
 module mains_outlet() {
-     iec(32, 23, 8, 40);
+     iec(34, 23, 8, 40);
 }
 
 module audio_socket() {
@@ -145,7 +145,7 @@ module socket_plate(outer) {
           translate([165, 14]) {
                mains_inlet();
                translate([50, 0]) {
-                    motor_socket();
+                    motor_socket(outer);
                     translate([25, 0]) {
                          reset_button();
                          translate([25, 0]) {
