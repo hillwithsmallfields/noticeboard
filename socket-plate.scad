@@ -20,6 +20,9 @@ module screw_hole() {
 
 module motor_socket(outer) {
      circle(d=outer ? 25 : 15);
+     translate([25, 0]) {
+          children();
+     }
 }
 
 module ethernet_socket() {
@@ -35,6 +38,9 @@ module usb_socket(outer) {
 module usb_sockets(outer, n_sockets) {
      for (i=[0:n_sockets-1]) {
           translate([15*i, 0]) usb_socket();
+     }
+     translate([20 * n_sockets, 0]) {
+          children();
      }
 }
 
@@ -55,6 +61,9 @@ module iec(width, height, corner_depth, hole_spacing) {
 
 module mains_inlet() {
      iec(26, 20, 5, 40);
+     translate([50, 0]) {
+          children();
+          }
 }
 
 module mains_outlet() {
@@ -63,6 +72,9 @@ module mains_outlet() {
 
 module audio_socket() {
      circle(d=9.5);
+     translate([20,0]) {
+          children();
+     }
 }
 
 module din_socket() {
@@ -71,15 +83,20 @@ module din_socket() {
           translate([-11.5, 0]) circle(d=3);
           translate([11.5, 0]) circle(d=3);
      }
+     translate([45, 0]) {
+          children();
+     }
 }
 
 module rocker_switch(outer) {
      length = outer ? 29 : 35;
-     translate([-length/2, -5.25]) square([length, 10.5]);
-}
+     translate([-length/2, -5.25]) square([length, 10.5]);}
 
 module reset_button() {
      circle(d=13);
+     translate([25, 0]) {
+          children();
+     }
 }
 
 module reset_button_mounting() {
@@ -88,7 +105,6 @@ module reset_button_mounting() {
           circle(d=7);
      }
 }
-
 
 module reset_button_spacer() {
      difference() {
@@ -143,18 +159,12 @@ module socket_plate(outer) {
                translate([25, 0]) circle(d=12);
           }
           translate([165, 14]) {
-               mains_inlet();
-               translate([50, 0]) {
-                    motor_socket(outer);
-                    translate([25, 0]) {
-                         reset_button();
-                         translate([25, 0]) {
-                              audio_socket();
-                              translate([20,0]) {
-                                   usb_sockets(outer, 3);
-                                   translate([60, 0]) {
-                                        din_socket();
-                                        translate([45, 0]) {
+               mains_inlet() {
+                    motor_socket(outer) {
+                         reset_button() {
+                              audio_socket() {
+                                   usb_sockets(outer, 3) {
+                                        din_socket() {
                                              mains_outlet();
                                         }
                                    }
