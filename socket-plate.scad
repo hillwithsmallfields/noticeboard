@@ -1,4 +1,4 @@
-plate_length = 425;
+plate_length = 460;
 gap_height = 28;
 overlap = 18;
 plate_height = gap_height + overlap;
@@ -7,7 +7,7 @@ half_height = gap_height / 2;
 
 fixing_height = gap_height + overlap/2;
 
-top_plate_length = 425;
+top_plate_length = 460;
 
 /* TODO:
    button holes
@@ -19,8 +19,8 @@ module screw_hole() {
 }
 
 module motor_socket(outer) {
-     circle(d=outer ? 25 : 15);
-     translate([25, 0]) {
+     circle(d=outer ? 16 : 25);
+     translate([20, 0]) {
           children();
      }
 }
@@ -36,10 +36,26 @@ module usb_socket(outer) {
 }
 
 module usb_sockets(outer, n_sockets) {
+     per_socket = 14;
      for (i=[0:n_sockets-1]) {
-          translate([15*i, 0]) usb_socket();
+          translate([per_socket*i, 0]) usb_socket(outer);
      }
-     translate([20 * n_sockets, 0]) {
+     translate([per_socket * (n_sockets + 0.5), 0]) {
+          children();
+     }
+}
+
+module hdmi_socket(outer) {
+     width = outer ? 18 : 31;
+     depth = outer ? 9 : 10;    /* not sure about the 10 */
+     translate([-width/2, -depth/2]) {
+          square([width, depth]);
+     }
+     if (outer) {
+          translate([-25/2, 0]) circle(d=4);
+          translate([25/2, 0]) circle(d=4);
+     }
+     translate([25, 0]) {
           children();
      }
 }
@@ -60,18 +76,18 @@ module iec(width, height, corner_depth, hole_spacing) {
 }
 
 module mains_inlet() {
-     iec(26, 20, 5, 40);
+     iec(28, 20, 5, 40);
      translate([50, 0]) {
           children();
           }
 }
 
 module mains_outlet() {
-     iec(34, 23, 8, 40);
+     iec(34, 24, 8, 40);
 }
 
 module audio_socket() {
-     circle(d=9.5);
+     circle(d=10.5);
      translate([20,0]) {
           children();
      }
@@ -79,11 +95,11 @@ module audio_socket() {
 
 module din_socket() {
      union() {
-          circle(d=15);
+          circle(d=16);
           translate([-11.5, 0]) circle(d=3);
           translate([11.5, 0]) circle(d=3);
      }
-     translate([45, 0]) {
+     translate([40, 0]) {
           children();
      }
 }
@@ -92,9 +108,18 @@ module rocker_switch(outer) {
      length = outer ? 29 : 35;
      translate([-length/2, -5.25]) square([length, 10.5]);}
 
+module jst3(outer) {
+     translate([0, -3]) {
+          square([10, outer ? 6 : 15]);
+     }
+     translate([25, 0]) {
+          children();
+     }
+}
+
 module reset_button() {
      circle(d=13);
-     translate([25, 0]) {
+     translate([22.5, 0]) {
           children();
      }
 }
@@ -110,6 +135,13 @@ module reset_button_spacer() {
      difference() {
           circle(d=24);
           circle(d=13);
+     }
+}
+
+module reset_button_nut_holder() {
+     difference() {
+          circle(d=24);
+          circle($fn=6, d=11.05);
      }
 }
 
@@ -152,18 +184,20 @@ module socket_plate(outer) {
      difference() {
           square([plate_length, plate_height]);
           translate([15, fixing_height]) screw_holes(5, plate_length-30);
-          translate([112, 0]) ethernet_socket();
-          translate([83, 14]) rocker_switch(outer);
-          translate([25, 14]) {
+          translate([150, 0]) ethernet_socket();
+          translate([77, 14]) rocker_switch(outer);
+          translate([30, 14]) {
                circle(d=12);
-               translate([25, 0]) circle(d=12);
+               translate([20, 0]) circle(d=12);
           }
-          translate([165, 14]) {
-               mains_inlet() {
-                    motor_socket(outer) {
+          translate([120, 14]) mains_inlet();
+          translate([195, 14]) hdmi_socket(outer);
+          translate([plate_length/2, 14]) {
+               motor_socket(outer) {
+                    jst3(outer) {
                          reset_button() {
                               audio_socket() {
-                                   usb_sockets(outer, 3) {
+                                   usb_sockets(true, 3) {
                                         din_socket() {
                                              mains_outlet();
                                         }
@@ -174,6 +208,15 @@ module socket_plate(outer) {
                }
           }
           /* translate([290, 8]) ventilation_hole_grid(6, 3); */
+     }
+}
+
+module usb_holder_plate(outer, n_sockets) {
+     difference() {
+          square([20*n_sockets-10, plate_height*0.6]);
+          translate([10, 14]) {
+               usb_sockets(outer, n_sockets);
+          }
      }
 }
 
@@ -198,8 +241,11 @@ module top_plate() {
 socket_plate(true);
 translate([0, plate_height + 3]) socket_plate(false);
 translate([0, (plate_height + 3) * 2]) top_plate();
-translate([plate_length + 15, 15]) {
+translate([10, (plate_height + 8) * 3]) {
      reset_button_mounting();
-     translate([0, 26]) reset_button_spacer();
-     translate([0, 52]) reset_button_spacer();
+     translate([26, 0]) reset_button_spacer();
+     translate([52, 0]) reset_button_nut_holder();
+     translate([70, -15]) usb_holder_plate(true, 3);
+     translate([130, -15]) usb_holder_plate(false, 3);
+     translate([190, -15]) usb_holder_plate(false, 3);
 }
