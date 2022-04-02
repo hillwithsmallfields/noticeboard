@@ -20,7 +20,7 @@ module screw_hole() {
 
 module motor_socket(outer) {
      circle(d=outer ? 16 : 25);
-     translate([20, 0]) {
+     translate([19, 0]) {
           children();
      }
 }
@@ -36,7 +36,7 @@ module usb_socket(outer) {
 }
 
 module usb_sockets(outer, n_sockets) {
-     per_socket = 14;
+     per_socket = 13;
      for (i=[0:n_sockets-1]) {
           translate([per_socket*i, 0]) usb_socket(outer);
      }
@@ -113,6 +113,21 @@ module jst3(outer) {
           square([10, outer ? 6 : 15]);
      }
      translate([25, 0]) {
+          children();
+     }
+}
+
+module test_sockets() {
+     translate([-3, -3]) {
+          for (i = [0:1]) {
+               for (j = [0:1]) {
+                    translate([j*6, i*6]) {
+                         circle(d=4);
+                    }
+               }
+          }
+     }
+     translate([12, 0]) {
           children();
      }
 }
@@ -194,12 +209,14 @@ module socket_plate(outer) {
           translate([195, 14]) hdmi_socket(outer);
           translate([plate_length/2, 14]) {
                motor_socket(outer) {
-                    jst3(outer) {
-                         reset_button() {
-                              audio_socket() {
-                                   usb_sockets(true, 3) {
-                                        din_socket() {
-                                             mains_outlet();
+                    test_sockets() {
+                         jst3(outer) {
+                              reset_button() {
+                                   audio_socket() {
+                                        usb_sockets(true, 3) {
+                                             din_socket() {
+                                                  mains_outlet();
+                                             }
                                         }
                                    }
                               }
@@ -241,7 +258,7 @@ module top_plate() {
 socket_plate(true);
 translate([0, plate_height + 3]) socket_plate(false);
 translate([0, (plate_height + 3) * 2]) top_plate();
-translate([10, (plate_height + 8) * 3]) {
+translate([20, (plate_height + 8) * 3]) {
      reset_button_mounting();
      translate([26, 0]) reset_button_spacer();
      translate([52, 0]) reset_button_nut_holder();
