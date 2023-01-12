@@ -19,7 +19,7 @@ def updated_lately(filename, recentness=3600):
 my_projects = os.path.dirname(sys.path[0])
 
 if not updated_lately(LAST_PULLED_FILE, UPDATE_INTERVAL):
-    for project in ("noticeboard", "JCGS-emacs", "JCGS-org-mode", "qs"):
+    for project in ("noticeboard", "JCGS-emacs", "JCGS-org-mode", "qs", "coimealta"):
         print("updating", project)
         os.chdir(os.path.join(my_projects, project))
         os.system("git pull")
