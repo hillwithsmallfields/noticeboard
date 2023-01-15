@@ -1,0 +1,19 @@
+14 7-21 * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/quarter-1
+29 6-21 * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/quarter-2
+44 6-21 * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/quarter-3
+59 6    * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 07
+59 7    * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 08
+59 8    * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 09
+59 9    * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 10
+59 10   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 11
+59 11   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 12
+59 12   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 01
+59 13   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 02
+59 14   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 03
+59 15   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 04
+59 16   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 05
+59 17   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 06
+59 18   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 07
+59 19   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 08
+59 20   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 09
+59 21   * * * $HOME/open-projects/github.com/hillwithsmallfields/noticeboard/hour 10
