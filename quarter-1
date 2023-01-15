@@ -1,0 +1,3 @@
+#!/bin/bash
+sleep 50
+ogg123 ~/Sync/music/Cambridge-chimes-first-quarter.ogg

@@ -1,0 +1,3 @@
+#!/bin/bash
+sleep 35
+ogg123 ~/Sync/music/Cambridge-chimes-hour-$1.ogg
