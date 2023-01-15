@@ -30,7 +30,7 @@ def sounds(no_on=False, no_off=False,
             subprocess.run((["timidity"] + [midi_file]))
         elif soundfile.endswith(".ly"):
             subprocess.run((["timidity"] + [soundfile]))
-    if not not_off:
+    if not no_off:
         GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
 
 def get_args():
