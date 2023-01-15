@@ -7,7 +7,7 @@ import RPi.GPIO as GPIO
 
 import pins
 
-def sounds(on=False, off=False,
+def sounds(no_on=False, no_off=False,
            begin=None,
            end=None,
            soundfile=None):
@@ -15,20 +15,28 @@ def sounds(on=False, off=False,
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(pins.PIN_SPEAKER, GPIO.OUT, initial=GPIO.LOW)
 
-    if on:
+    if not no_on:
         GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
     if soundfile:
-        subprocess.run((["ogg123"]
-                        + (["-k", str(begin)] if begin else [])
-                        + (["-K", str(end)] if end else [])
-                        + [soundfile]))
-    if off:
+        if soundfile.endswith(".ogg"):
+            subprocess.run((["ogg123"]
+                            + (["-k", str(begin)] if begin else [])
+                            + (["-K", str(end)] if end else [])
+                            + [soundfile]))
+        elif soundfile.endswith(".midi"):
+            midi_file = Path(soundfile).with_suffix(".midi")
+            if not midi_file.exists():
+                subprocess.run(["lilypond", soundfile])
+            subprocess.run((["timidity"] + [midi_file]))
+        elif soundfile.endswith(".ly"):
+            subprocess.run((["timidity"] + [soundfile]))
+    if not not_off:
         GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--on", action='store_true')
-    parser.add_argument("--off", action='store_true')
+    parser.add_argument("--no-on", action='store_true')
+    parser.add_argument("--no-off", action='store_true')
     parser.add_argument("--begin", type=float)
     parser.add_argument("--end", type=float)
     parser.add_argument("--soundfile")
