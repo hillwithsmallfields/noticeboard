@@ -130,9 +130,9 @@ class NoticeBoardHardware(object):
             midi_file = Path(music_filename).with_suffix(".midi")
             if not midi_file.exists():
                 subprocess.run(["lilypond", music_filename])
-            subprocess.run((["timidity"] + [midi_file]))
+            subprocess.run((["timidity", midi_file]))
         elif music_filename.endswith(".midi"):
-            subprocess.run((["timidity"] + [music_filename]))
+            subprocess.run((["timidity", music_filename]))
         GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
 
     def photo(self):

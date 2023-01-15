@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from pathlib import Path
 import subprocess
 
 import RPi.GPIO as GPIO
@@ -27,9 +28,9 @@ def sounds(no_on=False, no_off=False,
             midi_file = Path(soundfile).with_suffix(".midi")
             if not midi_file.exists():
                 subprocess.run(["lilypond", soundfile])
-            subprocess.run((["timidity"] + [midi_file]))
+            subprocess.run((["timidity", midi_file]))
         elif soundfile.endswith(".midi"):
-            subprocess.run((["timidity"] + [soundfile]))
+            subprocess.run((["timidity", soundfile]))
     if not no_off:
         GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
 
