@@ -20,7 +20,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--on", action='store_true')
     parser.add_argument("--off", action='store_true')
-    parser.add_argument("soundfile", default=None)
+    parser.add_argument("--soundfile"=None)
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
