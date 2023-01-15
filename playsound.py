@@ -6,7 +6,7 @@ import RPi.GPIO as GPIO
 
 import pins
 
-def sounds(on, off, soundfile):
+def sounds(on=False, off=False, soundfile=None):
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(pins.PIN_SPEAKER, GPIO.OUT, initial=GPIO.LOW)
@@ -20,7 +20,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--on", action='store_true')
     parser.add_argument("--off", action='store_true')
-    parser.add_argument("soundfile")
+    parser.add_argument("soundfile", default=None)
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
