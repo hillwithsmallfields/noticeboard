@@ -23,12 +23,12 @@ def sounds(no_on=False, no_off=False,
                             + (["-k", str(begin)] if begin else [])
                             + (["-K", str(end)] if end else [])
                             + [soundfile]))
-        elif soundfile.endswith(".midi"):
+        elif soundfile.endswith(".ly"):
             midi_file = Path(soundfile).with_suffix(".midi")
             if not midi_file.exists():
                 subprocess.run(["lilypond", soundfile])
             subprocess.run((["timidity"] + [midi_file]))
-        elif soundfile.endswith(".ly"):
+        elif soundfile.endswith(".midi"):
             subprocess.run((["timidity"] + [soundfile]))
     if not no_off:
         GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)

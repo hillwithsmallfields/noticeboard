@@ -126,12 +126,12 @@ class NoticeBoardHardware(object):
                            + (["-k", str(begin)] if begin else [])
                            + (["-K", str(end)] if end else [])
                            + [music_filename])
-        elif music_filename.endswith(".midi"):
+        elif music_filename.endswith(".ly"):
             midi_file = Path(music_filename).with_suffix(".midi")
             if not midi_file.exists():
                 subprocess.run(["lilypond", music_filename])
             subprocess.run((["timidity"] + [midi_file]))
-        elif music_filename.endswith(".ly"):
+        elif music_filename.endswith(".midi"):
             subprocess.run((["timidity"] + [music_filename]))
         GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
 
