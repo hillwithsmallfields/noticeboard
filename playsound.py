@@ -24,4 +24,4 @@ def get_args():
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
-    sounds(**get_args)
+    sounds(**get_args())
