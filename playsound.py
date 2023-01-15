@@ -19,10 +19,10 @@ def sounds(no_on=False, no_off=False,
         GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
     if soundfile:
         if soundfile.endswith(".ogg"):
-            subprocess.run((["ogg123"]
-                            + (["-k", str(begin)] if begin else [])
-                            + (["-K", str(end)] if end else [])
-                            + [soundfile]))
+            subprocess.run(["ogg123"]
+                           + (["-k", str(begin)] if begin else [])
+                           + (["-K", str(end)] if end else [])
+                           + [soundfile])
         elif soundfile.endswith(".ly"):
             midi_file = Path(soundfile).with_suffix(".midi")
             if not midi_file.exists():
