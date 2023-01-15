@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import RPi.GPIO as GPIO
 import picamera
 
@@ -108,21 +110,30 @@ class NoticeBoardHardware(object):
     def say(self, text):
         """Pass the text to a TTS system.
         That goes via this module so we can control the speaker power switch."""
-        GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
+        GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
         # TODO: first check there's no existing process
         # TODO: maybe we should have a sound queue?
-        self.speech_process = subprocess.Popen(
-            # TODO: fill in params
-        )
+        subprocess.run(["espeak", text])
+        GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
 
-    def play(self, music_filename):
+    def play(self, music_filename, begin=None, end=None):
         """Pass a music file to a player.
         That goes via this module so we can control the speaker power switch."""
-        GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
+        GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
         # TODO: start the player process asynchronously, switch speaker off at end
-        self.music_process = subprocess.Popen(
-            # TODO: fill in params
-        )
+        if music_filename.endswith(".ogg"):
+            subprocess.run(["ogg123"]
+                           + (["-k", str(begin)] if begin else [])
+                           + (["-K", str(end)] if end else [])
+                           + [music_filename])
+        elif music_filename.endswith(".midi"):
+            midi_file = Path(music_filename).with_suffix(".midi")
+            if not midi_file.exists():
+                subprocess.run(["lilypond", music_filename])
+            subprocess.run((["timidity"] + [midi_file]))
+        elif music_filename.endswith(".ly"):
+            subprocess.run((["timidity"] + [music_filename]))
+        GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
 
     def photo(self):
         """Capture a photo and store it with a timestamp in the filename."""
