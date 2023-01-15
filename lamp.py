@@ -13,7 +13,7 @@ class Lamp(object):
         GPIO.setup(self.gpio, GPIO.OUT, initial=GPIO.LOW)
 
     def set(self, brightness):
-        self.target = brightness
+        self.target = int(brightness)
 
     def step(self):
         if self.current < self.target:

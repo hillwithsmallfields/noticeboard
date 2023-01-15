@@ -56,6 +56,7 @@ class NoticeBoardHardware(object):
         self.power = False
 
     def lamps(self, brightness):
+        brightness = float(brightness)
         if brightness > 0:
             self.power_on()
         for lamp in self._lamps:
