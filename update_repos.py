@@ -1,12 +1,26 @@
 #!/usr/bin/python3
 
+"""Pull updates of the noticeboard system.
+
+This should be run under an "ssh-agent" shell,
+hence it not being part of the main noticeboard chores system.
+
+In the "daily" mode, it waits until between 2 and 3 a.m. to do the
+update, does the update, and then execs the python interpreter running
+the same program, thus forcing a reload in case of this program having
+been updated by the "git pull".
+
+"""
+
+import argparse
 import datetime
 import os
+import random
 import sys
+import time
 
 LAST_PULLED_FILE = "/tmp/last_pulled"
-# a day, but allow for a bit of clock jitter:
-UPDATE_INTERVAL = 23.5 * 60 * 60
+UPDATE_INTERVAL = 2 * 60 * 60
 
 def updated_lately(filename, recentness=3600):
     now = datetime.datetime.now()
@@ -16,13 +30,41 @@ def updated_lately(filename, recentness=3600):
         f.write(now.isoformat() + "\n")
     return recent
 
-my_projects = os.path.dirname(sys.path[0])
+script_dir = sys.path[0]
+script = os.path.join(script_dir, sys.argv[0])
+my_projects = os.path.dirname(script_dir)
 
-if not updated_lately(LAST_PULLED_FILE, UPDATE_INTERVAL):
-    for project in ("noticeboard", "JCGS-emacs", "JCGS-org-mode", "qs", "coimealta"):
-        print("updating", project)
-        os.chdir(os.path.join(my_projects, project))
-        os.system("git pull")
-    print("Updated lifehacking projects")
-else:
-    print("Skipped updating lifehacking projects, as was done within the past period")
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--daily", action='store_true')
+    return vars(parser.parse_args())
+
+def do_update():
+    if not updated_lately(LAST_PULLED_FILE, UPDATE_INTERVAL):
+        for project in ("noticeboard", "JCGS-emacs", "JCGS-org-mode", "qs", "coimealta"):
+            print("updating", project)
+            os.chdir(os.path.join(my_projects, project))
+            os.system("git pull")
+        os.chdir(script_dir)
+        os.system("cat *.crontab | crontab -")
+        print("Updated lifehacking projects")
+    else:
+        print("Skipped updating lifehacking projects, as was done within the past period")
+
+def main(daily=False):
+    if daily:
+        now = datetime.datetime.now()
+        time.sleep(((now
+                     # tomorrow
+                     + datetime.timedelta(days=1))
+                    # between 2 and 3 a.m.
+                    .replace(hour=2, minute=random.randint(0, 59), second=random.randint(0, 59))
+                    - now)
+                   .total_seconds())
+        do_update()
+        os.execlp("python3", script, "--daily")
+    else:
+        do_update()
+
+if __name__ == "__main__":
+    main(**get_args())

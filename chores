@@ -4,13 +4,6 @@ SCRIPT_DIR=$(dirname $(readlink -f "$0"))
 
 source $SCRIPT_DIR/env/bin/activate
 
-# When running from a crontab, we don't want it to require ssh keys
-# We could have a separate collection of read-only https repos for this, I think
-# if [ ${1-update} != --no-update ]
-# then
-# $SCRIPT_DIR/update_repos.py
-# fi
-
 export ARCHIVE=$HOME/archive
 export DOWNLOADS=$HOME/Downloads
 export ISOS=$HOME/isos
