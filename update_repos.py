@@ -62,7 +62,7 @@ def main(daily=False):
                     - now)
                    .total_seconds())
         do_update()
-        os.execlp("python3", script, "--daily")
+        os.execlp(script, "--daily")
     else:
         do_update()
 
