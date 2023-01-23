@@ -37,10 +37,11 @@ my_projects = os.path.dirname(script_dir)
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--daily", action='store_true')
+    parser.add_argument("--force", "-f", action='store_true')
     return vars(parser.parse_args())
 
-def do_update():
-    if not updated_lately(LAST_PULLED_FILE, UPDATE_INTERVAL):
+def do_update(force=False):
+    if force or not updated_lately(LAST_PULLED_FILE, UPDATE_INTERVAL):
         for project in ("noticeboard", "JCGS-emacs", "JCGS-org-mode", "qs", "coimealta"):
             print("updating", project)
             os.chdir(os.path.join(my_projects, project))
@@ -51,7 +52,7 @@ def do_update():
     else:
         print("Skipped updating lifehacking projects, as was done within the past period")
 
-def main(daily=False):
+def main(daily=False, force=False):
     if daily:
         now = datetime.datetime.now()
         time.sleep(((now
@@ -64,7 +65,7 @@ def main(daily=False):
         do_update()
         os.execlp(script, "--daily")
     else:
-        do_update()
+        do_update(force)
 
 if __name__ == "__main__":
     main(**get_args())
