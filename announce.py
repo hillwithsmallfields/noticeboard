@@ -11,7 +11,7 @@ import talkey                   # https://pypi.org/project/talkey/
 import time
 
 def sleep_timedelta(td):
-    time.sleep(td.seconds if isinstance(td, datetime.timedelta) else td)
+    time.sleep(td.total_seconds if isinstance(td, datetime.timedelta) else td)
 
 def announce(announcer, slot):
     print(slot.activity)
