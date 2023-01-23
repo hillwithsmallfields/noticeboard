@@ -6,6 +6,8 @@ import yaml
 
 source_dir = os.path.dirname(os.path.realpath(__file__))
 
+CONFIGURATION = {}
+
 # based on https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 def rec_update(basedict, u):
     """Update a dictionary recursively."""
@@ -105,6 +107,9 @@ def load_config(no_hardcoded_default=False,
                 no_main_config=False,
                 main_config_file=os.path.join(source_dir, "config.yaml"),
                 config_files=[]):
+
+    global CONFIGURATION
+
     config = {} if no_hardcoded_default else HARDCODED_DEFAULT_CONFIG
 
     if not no_main_config:
@@ -113,9 +118,9 @@ def load_config(no_hardcoded_default=False,
 
     load_multiple_yaml(config, config_files)
 
-    config = recursive_expand(config)
+    CONFIGURATION = recursive_expand(config)
 
-    return config
+    return CONFIGURATION
 
 def lookup(config, *keys):
     for key in keys:
@@ -131,6 +136,14 @@ def override(config, keys, value):
         else:
             config[key] = {}
     config[keys[-1]] = value
+
+def config(*keys):
+    if not CONFIGURATION:
+        load_config()
+    return lookup(CONFIGURATION, *keys)
+
+def file_config(*keys):
+    return os.path.expanduser(os.path.expandvars(config(*keys)))
 
 def main():
     """Look up and output a config element.
