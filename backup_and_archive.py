@@ -24,15 +24,18 @@ def make_tarball(tarball, of_directory):
 
 def write_iso_to_dvd(iso):
     """Write a DVD image to the drive if there's a blank disk in it."""
-    command = "wodim " + iso
-    if ("""wodim: Cannot read TOC header"""
-        in subprocess.run(["wodim", "-toc"],
-                          check=False, # suppress exception
-                          text=True,
-                          capture_output=True).stderr):
-        os.system(command)
+    if os.path.exists("/dev/dvdrw"):
+        command = "wodim " + iso
+        if ("""wodim: Cannot read TOC header"""
+            in subprocess.run(["wodim", "-toc"],
+                              check=False, # suppress exception
+                              text=True,
+                              capture_output=True).stderr):
+            os.system(command)
+        else:
+            print("Please put a blank DVD in the drive and run:", command)
     else:
-        print("Please put a blank DVD in the drive and run:", command)
+        print("Writable DVD drive not found")
 
 def latest_file_matching(template):
     """Return the name of the most recently modified file matching the glob template."""
