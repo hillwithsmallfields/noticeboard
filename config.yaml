@@ -1,5 +1,6 @@
 finance:
         accounts-config: accounts.yaml
+        main-account-number: 81072106
         accumulated-bank-statements-file: $SYNCED/finances/handelsbanken/handelsbanken-full.csv
         bank-statement-template: $DOWNLOADS/Transaction*.csv
         budgeting-classes-file: budgetting-classes.yaml
@@ -7,9 +8,10 @@ finance:
         conversions-config: conversions.yaml
         conversions-dir: $SYNCED/finances
         finances-completions: $SYNCED/var/finances-completions.el
-        main-account: $SYNCED/finances/finances.csv
+        for-categorization: $SYNCED/finances/for-categorization.csv
+        main-account-file: $SYNCED/finances/finances.csv
         merge-results-dir: $SCRATCH/auto-merge-results
-        merge-results-file: merged-with-unmatched-all.csv
+        merge-results-file: newly-merged.csv
         thresholds-file: budgetting-thresholds.yaml
         main-current-account: Handelsbanken current account
         main-savings-account: Handelsbanken savings
