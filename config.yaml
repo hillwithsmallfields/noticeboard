@@ -5,7 +5,7 @@ finance:
         bank-statement-template: $DOWNLOADS/Transaction*.csv
         budgeting-classes-file: budgetting-classes.yaml
         configdir: ~/open-projects/github.com/hillwithsmallfields/qs/conf
-        conversions-config: conversions.yaml
+        conversions-config: conversions.csv
         conversions-dir: $SYNCED/finances
         finances-completions: $SYNCED/var/finances-completions.el
         for-categorization: $SYNCED/finances/for-categorization.csv
