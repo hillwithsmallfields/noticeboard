@@ -105,6 +105,8 @@ class Day():
         print("loading", input_file)
         today = datetime.date.today()
         with open (input_file) as instream:
+            # When a start but no duration is given, hold it here
+            # until we have the start of the next entry:
             pending = None
             incoming = []
             for row in csv.DictReader(instream):
