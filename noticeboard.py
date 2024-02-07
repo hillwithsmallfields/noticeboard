@@ -48,7 +48,7 @@ config = {
 camera = None
 
 def convert_interval(interval_string):
-    """Convert a string giving start and end times into a tuple.
+    """Convert a string giving start and end times into a tuple of minutes after midnight.
     For the input "07:30--09:15" the output would be (450, 555)."""
     matched = re.match("([0-2][0-9]):([0-5][0-9])--([0-2][0-9]):([0-5][0-9])", interval_string)
     return (((int(matched.group(1))*60 + int(matched.group(2))),
@@ -89,38 +89,6 @@ def handle_possible_intruder():
         logfile.write(datetime.datetime.now().isoformat() + "\n")
     # todo: send a remote notification e.g. email with the picture
 
-def quit():
-    """Tell the main loop to quit."""
-    global running
-    running = False
-
-def show_help():
-    """List the commands."""
-    maxlen = 1 + functools.reduce(max, map(len, actions.keys()))
-    for command_name in sorted(actions.keys()):
-        docstring = actions[command_name].__doc__
-        if docstring is None:
-            docstring = "Undocumented"
-        print(command_name + ' '*(maxlen - len(command_name)), docstring)
-
-actions = {
-    "auto",
-    "away",
-    "extend",
-    "help",
-    "home",
-    "off",
-    "on",
-    "photo",
-    "play",
-    "quench",
-    "quit",
-    "report",
-    "retract",
-    "say",
-    "shine"
-    }
-
 # based on https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 def rec_update(d, u, i=""):
     for k, v in u.items():
@@ -135,7 +103,6 @@ def rec_update(d, u, i=""):
     return d
 
 enable_pir = False
-running = True
 
 def main():
     """Interface to the hardware of my noticeboard.
@@ -143,20 +110,20 @@ def main():
     config_file_name = "/etc/noticeboard.conf"
     if os.path.isfile(config_file_name):
         with open(os.path.expanduser(os.path.expandvars(config_file_name))) as config_file:
-            more_config = yaml.safe_load(config_file)
-            rec_update(config, more_config)
+            rec_update(config, yaml.safe_load(config_file))
     global expected_at_home_times
-    expected_at_home_times = { day: [convert_interval(interval_string)
-                                     for interval_string in interval_string_list]
-                               for day, interval_string_list in config['expected_occupancy'].items()}
+    expected_at_home_times = {day: [convert_interval(interval_string)
+                                    for interval_string in interval_string_list]
+                              for day, interval_string_list in config['expected_occupancy'].items()}
     print("noticeboard hardware controller starting")
     global photographing
     global photographing_duration
     photographing_duration = datetime.timedelta(0, config['camera']['duration'])
 
-    controller = NoticeBoardHardware(config)
+    controller = NoticeBoardHardware(config, expected_at_home_times)
 
     print("noticeboard hardware controller started")
+    running = True
     while running:
         active = controller.step()
         # if we're stepping through an activity, ignore commands for now:
@@ -166,10 +133,8 @@ def main():
             ready, _, _ = select.select([sys.stdin], [], [], main_loop_delay)
             if sys.stdin in ready:
                 command = shlex.parse(sys.stdin.readline().strip())
-                if command[0] in actions:
-                    getattr(controller, command)(command)
-                else:
-                    print('(error "Unknown noticeboard command" ', command, ')')
+                if controller.onecmd(command[0]):
+                    running = False
 
         # if photographing:
         #     take_photo()

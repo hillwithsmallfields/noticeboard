@@ -1,5 +1,8 @@
 from pathlib import Path
 
+import cmd
+import datetime
+
 import RPi.GPIO as GPIO
 import picamera
 
@@ -11,12 +14,13 @@ from lamp import Lamp
 # see https://forums.raspberrypi.com/viewtopic.php?t=278003 for driving the lamps
 # see https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20 for the temperature sensor
 
-class NoticeBoardHardware(object):
+class NoticeBoardHardware(cmd.Cmd):
 
     pass
 
-    def __init__(self, config):
+    def __init__(self, config, expected_at_home_times):
         self.config = config
+        self.expected_at_home_times = expected_at_home_times
         self.power = False
         self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
         self.keyboard_status = 'unknown'
@@ -25,6 +29,7 @@ class NoticeBoardHardware(object):
         self.porch_pir_seen_at = 0
         self.music_process = None
         self.speech_process = None
+        self.user_status_automatic = False
         self.user_status = 'unknown'
         self.temperature = None
         self.camera = picamera.PiCamera()
@@ -43,17 +48,19 @@ class NoticeBoardHardware(object):
         GPIO.setup(pins.PIN_LAMP_LEFT, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_LAMP_RIGHT, GPIO.OUT, initial=GPIO.LOW)
 
-    def on(self):
+    def do_on(self):
         """Switch the 12V power on."""
         print("switching 12V power on")
         GPIO.output(pins.PIN_PSU, GPIO.LOW)
         self.power = True
+        return False
 
-    def off(self):
+    def do_off(self):
         """Switch the 12V power off."""
         print("switching 12V power off")
         GPIO.output(pins.PIN_PSU, GPIO.HIGH)
         self.power = False
+        return False
 
     def lamps(self, brightness):
         brightness = float(brightness)
@@ -62,15 +69,17 @@ class NoticeBoardHardware(object):
         for lamp in self._lamps:
             lamp.set(brightness)
 
-    def shine(self):
+    def do_shine(self):
         """Switch the lamps on."""
         print("switching lamps on")
         lamps(100)
+        return False
 
-    def quench(self):
+    def do_quench(self):
         """Switch the lamps off."""
         print("switching lamps off")
         lamps(0)
+        return False
 
     def extended(self):
         return GPIO.input(pins.PIN_EXTENDED)
@@ -78,7 +87,7 @@ class NoticeBoardHardware(object):
     def retracted(self):
         return GPIO.input(pins.PIN_RETRACTED)
 
-    def extend(self):
+    def do_extend(self):
         """Slide the keyboard drawer out."""
         if self.keyboard_status == 'extended':
             print("keyboard already extended")
@@ -89,8 +98,9 @@ class NoticeBoardHardware(object):
             self.keyboard_status = 'extending'
             GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
             GPIO.output(pins.PIN_EXTEND, GPIO.HIGH)
+        return False
 
-    def retract(self):
+    def do_retract(self):
         """Slide the keyboard drawer back in."""
         if self.keyboard_status == 'retracted':
             print("keyboard already retracted")
@@ -101,6 +111,7 @@ class NoticeBoardHardware(object):
             self.keyboard_status = 'retracting'
             GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
             GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
+        return False
 
     def pir_actions(self):
         pass
@@ -108,7 +119,7 @@ class NoticeBoardHardware(object):
     def porch_pir_actions(self):
         pass
 
-    def say(self, text):
+    def do_say(self, text):
         """Pass the text to a TTS system.
         That goes via this module so we can control the speaker power switch."""
         GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
@@ -116,8 +127,9 @@ class NoticeBoardHardware(object):
         # TODO: maybe we should have a sound queue?
         subprocess.run(["espeak", text])
         GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
+        return False
 
-    def play(self, music_filename, begin=None, end=None):
+    def do_play(self, music_filename, begin=None, end=None):
         """Pass a music file to a player.
         That goes via this module so we can control the speaker power switch."""
         GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
@@ -135,19 +147,32 @@ class NoticeBoardHardware(object):
         elif music_filename.endswith(".midi"):
             subprocess.run((["timidity", music_filename]))
         GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
+        return False
 
-    def photo(self):
+    def do_photo(self):
         """Capture a photo and store it with a timestamp in the filename."""
         image_filename = os.path.join(self.config['camera']['directory'],
                                       datetime.datetime.now().isoformat()+".jpg")
         print("taking photo into", image_filename)
         self.camera.capture(image_filename)
+        return False
         # todo: compare with previous photo in series, and drop any that are very nearly the same
 
     def step(self):
         """Perform one step of any active operations.
         Returns whether there's anything going on that needs
         the event loop to run fast."""
+
+        # TODO: select the day for this
+        # if self.user_status_automatic:
+        #     now = datetime.datetime.now().time()
+        #     this_minute = now.hour * 60 + now.minute
+        #     at_home = False
+        #     for begin, end in self.expected_at_home_times:
+        #         if begin <= this_minute <= end:
+        #             at_home = True
+        #             break
+        #     self.user_status = 'home' if at_home else 'away'
 
         for lamp in self._lamps:
             lamp.step()
@@ -204,7 +229,7 @@ class NoticeBoardHardware(object):
         return (self.keyboard_status in ('retracting', 'extending')
                     or any(lamp.changing() for lamp in self._lamps))
 
-    def report(self):
+    def do_report(self):
         """Output the status of the noticeboard hardware."""
         PIR_active = GPIO.input(pins.PIN_PIR)
         keyboard_extended = self.extended()
@@ -212,15 +237,24 @@ class NoticeBoardHardware(object):
         print("12V power on:", self.power)
         print("PIR:", PIR_active)
         print("Keyboard status:", self.keyboard_status)
+        return False
 
-    def at_home(self):
+    def do_at_home(self):
         """Tell the system I am at home."""
         self.user_status = 'home'
+        self.user_status_automatic = False
+        return False
 
-    def away(self):
+    def do_away(self):
         """Tell the system I am away."""
         self.user_status = 'away'
+        self.user_status_automatic = False
+        return False
 
-    def auto(self):
+    def do_auto(self):
         """Tell the system I'm not telling it whether I'm at home."""
-        self.user_status = 'automatic'
+        self.user_status_automatic = True
+        return False
+
+    def do_quit(self):
+        return True
