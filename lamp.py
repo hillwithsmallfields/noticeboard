@@ -9,7 +9,7 @@ class Lamp(object):
         self.target = 0
         self.current = 0
         print("making Lamp with gpio", self.gpio)
-        self.pwm = GPIO.PWM(self.gpio, 1000, 42)
+        self.pwm = GPIO.PWM(self.gpio, 1000)
         GPIO.setup(self.gpio, GPIO.OUT, initial=GPIO.LOW)
 
     def set(self, brightness):
