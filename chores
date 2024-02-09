@@ -11,4 +11,10 @@ export PRIVATEHTML=$HOME/private_html
 export SCRATCH=$HOME/scratch
 export SYNCEDSNAPSHOTS=$HOME/Sync-snapshots
 
-$SCRIPT_DIR/chores.py $*
+date >> /tmp/chores-crontab-log
+echo About to run chores.py >> /tmp/chores-crontab-log
+
+$SCRIPT_DIR/chores.py $* 2>&1 >> /tmp/chores-crontab-log
+
+echo Finished running chores.py >> /tmp/chores-crontab-log
+date >> /tmp/chores-crontab-log

@@ -24,6 +24,7 @@ config = {
         'motor': 0.01,
         'main_loop': 1.0,
         'pir_delay': 2.0,
+        'porch_pir_delay': 2.0,
         'step_max': 200},
     'expected_occupancy': {
         # default for a 9-5 worker who stays in at weekends
@@ -123,6 +124,7 @@ def main():
     controller = NoticeBoardHardware(config, expected_at_home_times)
 
     print("noticeboard hardware controller started")
+    main_loop_delay = config['delays']['main_loop']
     running = True
     while running:
         active = controller.step()
