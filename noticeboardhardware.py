@@ -114,7 +114,7 @@ class NoticeBoardHardware(cmd.Cmd):
         return False
 
     def pir_actions(self):
-        pass
+        print("pir seen")
 
     def porch_pir_actions(self):
         pass
