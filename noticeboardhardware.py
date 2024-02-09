@@ -66,20 +66,20 @@ class NoticeBoardHardware(cmd.Cmd):
     def lamps(self, brightness):
         brightness = float(brightness)
         if brightness > 0:
-            self.power_on()
+            self.do_on(None)
         for lamp in self._lamps:
             lamp.set(brightness)
 
     def do_shine(self, arg):
         """Switch the lamps on."""
         print("switching lamps on")
-        lamps(100)
+        self.lamps(100)
         return False
 
     def do_quench(self, arg):
         """Switch the lamps off."""
         print("switching lamps off")
-        lamps(0)
+        self.lamps(0)
         return False
 
     def extended(self):
@@ -95,7 +95,7 @@ class NoticeBoardHardware(cmd.Cmd):
         else:
             if self.keyboard_status != 'extending':
                 self.moving_steps = 0
-            power_on()
+            self.do_on(None)
             self.keyboard_status = 'extending'
             GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
             GPIO.output(pins.PIN_EXTEND, GPIO.HIGH)
@@ -108,7 +108,7 @@ class NoticeBoardHardware(cmd.Cmd):
         else:
             if self.keyboard_status != 'retracting':
                 self.moving_steps = 0
-            power_on()
+            self.do_on(None)
             self.keyboard_status = 'retracting'
             GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
             GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
