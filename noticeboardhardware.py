@@ -22,7 +22,6 @@ class NoticeBoardHardware(cmd.Cmd):
         self.config = config
         self.expected_at_home_times = expected_at_home_times
         self.power = False
-        self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
         self.keyboard_status = 'unknown'
         self.moving_steps = 0
         self.pir_seen_at = 0
@@ -32,7 +31,6 @@ class NoticeBoardHardware(cmd.Cmd):
         self.user_status_automatic = False
         self.user_status = 'unknown'
         self.temperature = None
-        self.camera = picamera.PiCamera()
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(pins.PIN_PIR, GPIO.IN)
@@ -47,6 +45,8 @@ class NoticeBoardHardware(cmd.Cmd):
         GPIO.setup(pins.PIN_PORCH_LAMP, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_LAMP_LEFT, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_LAMP_RIGHT, GPIO.OUT, initial=GPIO.LOW)
+        self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
+        self.camera = picamera.PiCamera()
 
     def do_on(self):
         """Switch the 12V power on."""
