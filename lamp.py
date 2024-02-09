@@ -28,5 +28,5 @@ class Lamp(object):
             else:
                 self.pwm.ChangeDutyCycle(self.current)
 
-    def changing():
+    def changing(self):
         return self.current != self.target
