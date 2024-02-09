@@ -49,24 +49,36 @@ class NoticeBoardHardware(cmd.Cmd):
         self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
         self.camera = picamera.PiCamera()
 
+    def power(self, is_on):
+        print("switching 12V power on")
+        GPIO.output(pins.PIN_PSU, GPIO.LOW if is_on else GPIO.HIGH)
+        self.power = True
+
     def do_on(self, arg):
         """Switch the 12V power on."""
-        print("switching 12V power on")
-        GPIO.output(pins.PIN_PSU, GPIO.LOW)
-        self.power = True
+        self.power(True)
         return False
 
     def do_off(self, arg):
         """Switch the 12V power off."""
-        print("switching 12V power off")
-        GPIO.output(pins.PIN_PSU, GPIO.HIGH)
-        self.power = False
+        self.power(False)
+        return False
+
+    def sound(self, is_on):
+        GPIO.output(pins.PIN_SPEAKER, GPIO.LOW if is_on else GPIO.HIGH)
+
+    def do_speaker(self, arg):
+        self.sound(True)
+        return False
+
+    def do_quiet(self, arg):
+        self.sound(False)
         return False
 
     def lamps(self, brightness):
         brightness = float(brightness)
         if brightness > 0:
-            self.do_on(None)
+            self.power(True)
         for lamp in self._lamps:
             lamp.set(brightness)
 
@@ -95,7 +107,7 @@ class NoticeBoardHardware(cmd.Cmd):
         else:
             if self.keyboard_status != 'extending':
                 self.moving_steps = 0
-            self.do_on(None)
+            self.power(True)
             self.keyboard_status = 'extending'
             GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
             GPIO.output(pins.PIN_EXTEND, GPIO.HIGH)
@@ -108,7 +120,7 @@ class NoticeBoardHardware(cmd.Cmd):
         else:
             if self.keyboard_status != 'retracting':
                 self.moving_steps = 0
-            self.do_on(None)
+            self.power(True)
             self.keyboard_status = 'retracting'
             GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
             GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
@@ -123,17 +135,17 @@ class NoticeBoardHardware(cmd.Cmd):
     def do_say(self, text):
         """Pass the text to a TTS system.
         That goes via this module so we can control the speaker power switch."""
-        GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
+        self.sound(True)
         # TODO: first check there's no existing process
         # TODO: maybe we should have a sound queue?
         subprocess.run(["espeak", text])
-        GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
+        self.sound(False)
         return False
 
     def do_play(self, music_filename, begin=None, end=None):
         """Pass a music file to a player.
         That goes via this module so we can control the speaker power switch."""
-        GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
+        self.sound(True)
         # TODO: start the player process asynchronously, switch speaker off at end
         if music_filename.endswith(".ogg"):
             subprocess.run(["ogg123"]
@@ -147,7 +159,7 @@ class NoticeBoardHardware(cmd.Cmd):
             subprocess.run((["timidity", midi_file]))
         elif music_filename.endswith(".midi"):
             subprocess.run((["timidity", music_filename]))
-        GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
+        self.sound(False)
         return False
 
     def do_photo(self, arg):
