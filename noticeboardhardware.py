@@ -49,14 +49,14 @@ class NoticeBoardHardware(cmd.Cmd):
         self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
         self.camera = picamera.PiCamera()
 
-    def do_on(self):
+    def do_on(self, arg):
         """Switch the 12V power on."""
         print("switching 12V power on")
         GPIO.output(pins.PIN_PSU, GPIO.LOW)
         self.power = True
         return False
 
-    def do_off(self):
+    def do_off(self, arg):
         """Switch the 12V power off."""
         print("switching 12V power off")
         GPIO.output(pins.PIN_PSU, GPIO.HIGH)
@@ -70,13 +70,13 @@ class NoticeBoardHardware(cmd.Cmd):
         for lamp in self._lamps:
             lamp.set(brightness)
 
-    def do_shine(self):
+    def do_shine(self, arg):
         """Switch the lamps on."""
         print("switching lamps on")
         lamps(100)
         return False
 
-    def do_quench(self):
+    def do_quench(self, arg):
         """Switch the lamps off."""
         print("switching lamps off")
         lamps(0)
@@ -88,7 +88,7 @@ class NoticeBoardHardware(cmd.Cmd):
     def retracted(self):
         return GPIO.input(pins.PIN_RETRACTED)
 
-    def do_extend(self):
+    def do_extend(self, arg):
         """Slide the keyboard drawer out."""
         if self.keyboard_status == 'extended':
             print("keyboard already extended")
@@ -101,7 +101,7 @@ class NoticeBoardHardware(cmd.Cmd):
             GPIO.output(pins.PIN_EXTEND, GPIO.HIGH)
         return False
 
-    def do_retract(self):
+    def do_retract(self, arg):
         """Slide the keyboard drawer back in."""
         if self.keyboard_status == 'retracted':
             print("keyboard already retracted")
@@ -150,7 +150,7 @@ class NoticeBoardHardware(cmd.Cmd):
         GPIO.output(pins.PIN_SPEAKER, GPIO.HIGH)
         return False
 
-    def do_photo(self):
+    def do_photo(self, arg):
         """Capture a photo and store it with a timestamp in the filename."""
         image_filename = os.path.join(self.config['camera']['directory'],
                                       datetime.datetime.now().isoformat()+".jpg")
@@ -230,7 +230,7 @@ class NoticeBoardHardware(cmd.Cmd):
         return (self.keyboard_status in ('retracting', 'extending')
                     or any(lamp.changing() for lamp in self._lamps))
 
-    def do_report(self):
+    def do_report(self, arg):
         """Output the status of the noticeboard hardware."""
         PIR_active = GPIO.input(pins.PIN_PIR)
         keyboard_extended = self.extended()
@@ -240,22 +240,22 @@ class NoticeBoardHardware(cmd.Cmd):
         print("Keyboard status:", self.keyboard_status)
         return False
 
-    def do_at_home(self):
+    def do_at_home(self, arg):
         """Tell the system I am at home."""
         self.user_status = 'home'
         self.user_status_automatic = False
         return False
 
-    def do_away(self):
+    def do_away(self, arg):
         """Tell the system I am away."""
         self.user_status = 'away'
         self.user_status_automatic = False
         return False
 
-    def do_auto(self):
+    def do_auto(self, arg):
         """Tell the system I'm not telling it whether I'm at home."""
         self.user_status_automatic = True
         return False
 
-    def do_quit(self):
+    def do_quit(self, arg):
         return True

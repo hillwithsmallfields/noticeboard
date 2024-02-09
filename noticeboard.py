@@ -10,7 +10,6 @@ import os
 import subprocess
 import re
 import select
-import shlex
 import sys
 import time
 import yaml
@@ -134,8 +133,7 @@ def main():
         else:
             ready, _, _ = select.select([sys.stdin], [], [], main_loop_delay)
             if sys.stdin in ready:
-                command = shlex.parse(sys.stdin.readline().strip())
-                if controller.onecmd(command[0]):
+                if controller.onecmd(ys.stdin.readline().strip()):
                     running = False
 
         # if photographing:
