@@ -95,10 +95,10 @@ class NoticeBoardHardware(cmd.Cmd):
         return False
 
     def extended(self):
-        return GPIO.input(pins.PIN_EXTENDED)
+        return not GPIO.input(pins.PIN_EXTENDED)
 
     def retracted(self):
-        return GPIO.input(pins.PIN_RETRACTED)
+        return not GPIO.input(pins.PIN_RETRACTED)
 
     def do_extend(self, arg):
         """Slide the keyboard drawer out."""
