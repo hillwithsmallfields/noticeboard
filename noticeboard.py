@@ -134,7 +134,7 @@ def main():
         else:
             ready, _, _ = select.select([sys.stdin], [], [], main_loop_delay)
             if sys.stdin in ready:
-                if controller.onecmd(stdin.readline().strip()):
+                if controller.onecmd(sys.stdin.readline().strip()):
                     running = False
 
         # if photographing:
