@@ -134,8 +134,11 @@ def main():
         else:
             ready, _, _ = select.select([sys.stdin], [], [], main_loop_delay)
             if sys.stdin in ready:
-                if controller.onecmd(sys.stdin.readline().strip()):
-                    running = False
+                try:
+                    if controller.onecmd(sys.stdin.readline().strip()):
+                        running = False
+                except Exception as e:
+                    print("Exception in running command:", e)
 
         # if photographing:
         #     take_photo()
