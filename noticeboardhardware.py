@@ -22,7 +22,7 @@ class NoticeBoardHardware(cmd.Cmd):
     def __init__(self, config, expected_at_home_times):
         self.config = config
         self.expected_at_home_times = expected_at_home_times
-        self.power = False
+        self.v12_is_on = False
         self.keyboard_status = 'unknown'
         self.moving_steps = 0
         self.pir_seen_at = 0
@@ -49,10 +49,10 @@ class NoticeBoardHardware(cmd.Cmd):
         self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
         self.camera = picamera.PiCamera()
 
-    def power(self, is_on):
-        print("switching 12V power on")
-        GPIO.output(pins.PIN_PSU, GPIO.LOW if is_on else GPIO.HIGH)
-        self.power = True
+    def power(self, on):
+        print("switching 12V power", "on" if on else "off")
+        GPIO.output(pins.PIN_PSU, GPIO.LOW if on else GPIO.HIGH)
+        self.v12_is_on = on
 
     def do_on(self, arg):
         """Switch the 12V power on."""
@@ -251,7 +251,7 @@ class NoticeBoardHardware(cmd.Cmd):
         PIR_active = GPIO.input(pins.PIN_PIR)
         keyboard_extended = self.extended()
         keyboard_retracted = self.retracted()
-        print("12V power on:", self.power)
+        print("12V power on:", self.v12_is_on)
         print("PIR:", PIR_active)
         print("Keyboard status:", self.keyboard_status)
         return False
