@@ -109,6 +109,7 @@ class NoticeBoardHardware(cmd.Cmd):
                 self.moving_steps = 0
             self.power(True)
             self.keyboard_status = 'extending'
+            print("starting to extend keyboard tray")
             GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
             GPIO.output(pins.PIN_EXTEND, GPIO.HIGH)
         return False
@@ -122,6 +123,7 @@ class NoticeBoardHardware(cmd.Cmd):
                 self.moving_steps = 0
             self.power(True)
             self.keyboard_status = 'retracting'
+            print("starting to retract keyboard tray")
             GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
             GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
         return False
@@ -193,6 +195,7 @@ class NoticeBoardHardware(cmd.Cmd):
         stepmax = self.config['delays']['step_max']
         if self.keyboard_status == 'retracting':
             if self.retracted() or self.moving_steps > stepmax:
+                print("stopping retracting", self.moving_steps, stepmax)
                 self.keyboard_status = 'retracted'
                 GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
                 GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
@@ -200,6 +203,7 @@ class NoticeBoardHardware(cmd.Cmd):
                 self.moving_steps += 1
         elif self.keyboard_status == 'extending':
             if self.extended() or self.moving_steps > stepmax:
+                print("stopping extending", self.moving_steps, stepmax)
                 self.keyboard_status = 'extended'
                 GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
                 GPIO.output(pins.PIN_RETRACT, GPIO.LOW)

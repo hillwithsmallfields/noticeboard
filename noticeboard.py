@@ -127,13 +127,14 @@ def main():
     running = True
     while running:
         active = controller.step()
+        print("active", active)
         # if we're stepping through an activity, ignore commands for now:
         if active:
             time.sleep(config['delays']['motor'])
         else:
             ready, _, _ = select.select([sys.stdin], [], [], main_loop_delay)
             if sys.stdin in ready:
-                if controller.onecmd(sys.stdin.readline().strip()):
+                if controller.onecmd(stdin.readline().strip()):
                     running = False
 
         # if photographing:
