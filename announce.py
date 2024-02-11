@@ -35,6 +35,7 @@ def as_timedelta(duration):
                                     minutes=int(hours_minutes[1])))
 
 def as_time(when):
+    """Convert anything that might be a time to a time."""
     return (when
             if isinstance(when, datetime.time)
             else (when.time()
@@ -42,6 +43,7 @@ def as_time(when):
                   else (datetime.time.fromisoformat(when))))
 
 def as_datetime(when):
+    """Convert anything that might be a datetime to a datetime."""
     return (when
             if isinstance(when, datetime.datetime)
             else (datetime.datetime.combine(datetime.date.today(),
@@ -51,15 +53,18 @@ def as_datetime(when):
 
 class TimeSlot():
 
-    pass
+    """A timeslot for an activity."""
 
     def __init__(self,
                  start, activity,
                  duration=None,
+                 end=None,
                  link=None,
                  sound=None):
         self.start = as_datetime(start)
-        self.end = (self.start + as_timedelta(duration)) if duration else None
+        self.end = end or ((self.start + as_timedelta(duration))
+                           if duration
+                           else None)
         self.activity = activity
         self.link = link
 
@@ -89,7 +94,7 @@ class TimeSlot():
 
 class Day():
 
-    pass
+    """A timeslot manager."""
 
     def __init__(self, inputfile=None, verbose=False):
         self.slots = {}
@@ -100,26 +105,28 @@ class Day():
     def add_slot(self, slot):
         """Add a timeslot.
         If it overlaps with existing ones, they are split as necessary."""
-        for when, existing in slots.items():
+        # iterate over a copy of the dictionary, as we will be
+        # changing the original dictionary from inside the loop:
+        for when, existing in {k: v for k, v in self.slots.items()}.items():
             if existing.starts_during(slot) and existing.ends_during(slot):
                 # we overlap it completely, so supersede it:
-                del slots.items[when]
+                if when in self.slots: # might have been removed earlier
+                    del self.slots[when]
             elif slot.starts_during(existing):
                 if slot.ends_during(existing):
                     # split the existing slot into before and after parts
+                    # make an "after" part:
                     self.slots[slot.end] = TimeSlot(start=slot.end,
-                                                    duration=existing.end-slot.end,
+                                                    end=existing.end,
                                                     activity=existing.activity,
                                                     link=existing.link)
-                    existing.duration = slot.start - existing.start
-                else:
-                    # keep the beginning of the existing one
-                    existing.duration = slot.start - existing.start
+                # the original one becomes the "before" part:
+                existing.end = slot.start
             elif slot.ends_during(existing):
                 # but we already know it doesn't start during it
                 # keep the end of the existing one
-                existing.duration = (existing.start + existing.duration) - (slot.start + slot.duration)
-                existing.start = slot.start + slot.duration
+                existing.duration = existing.end - slot.end
+                existing.start = slot.end
         self.slots[slot.start] = slot
 
     def load(self, input_file, verbose=False):
@@ -164,12 +171,12 @@ class Day():
 
 class Announcer():
 
-    pass
+    """A timeslotted day manager."""
 
     def __init__(self,
                  speech_engine="espeak",
                  language="en",
-                 chimes_dir,
+                 chimes_dir="/usr/local/share/chimes",
                  day=None):
         self.speech_engine = speech_engine
         self.language = language
@@ -215,8 +222,9 @@ class Announcer():
 
     def schedule_chimes(self):
         """Add chimes to the schedule."""
-        for hour in range(6, 22):
-            self.schedule_sound()
+        pass
+        # for hour in range(6, 22):
+        #     self.schedule_sound()
 
     def start(self):
         self.scheduler.run()
@@ -225,7 +233,7 @@ class Announcer():
         self.scheduler.run(blocking=False)
 
     def empty_queue(self):
-        for event in self.scheduler.queue():
+        for event in self.scheduler.queue:
             self.scheduler.cancel(event)
 
 def find_default_file(directory):
@@ -277,21 +285,6 @@ def unit_tests():
     if not ten_thirty.clashes_with(ten):
         print("fail: not ten_thirty.clashes_with(ten)")
 
-def get_day_data(inputfile,
-                 verbose=False):
-
-    my_day = Day()
-
-    if os.path.isdir(inputfile):
-        my_day.load(find_default_file(inputfile), verbose)
-        my_day.load(find_day_file(inputfile,
-                                  calendar.day_name[datetime.date.today().weekday()]),
-                    verbose)
-    else:
-        my_day.load(inputfile, verbose)
-
-    return my_day
-
 def get_day_announcer(inputfile,
                       extra_files=[],
                       language='en',
@@ -313,12 +306,15 @@ def get_args():
                         help="""The engine to use for Talkey""")
     parser.add_argument("--verbose", "-v",
                         action='store_true')
+    parser.add_argument("--display", "-d",
+                        action='store_true')
+    parser.add_argument("--timetables",
+                        default="$SYNCED/timetables")
     parser.add_argument("--run-tests", "-u",
                         action='store_true')
-    parser.add_argument('inputfile')
     return vars(parser.parse_args())
 
-def main(language, engine, verbose, run_tests, inputfile):
+def main(language, engine, verbose, run_tests, display, timetables):
 
     if run_tests:
         unit_tests()
@@ -326,16 +322,15 @@ def main(language, engine, verbose, run_tests, inputfile):
 
     my_announcer = Announcer(
         speech_engine=engine,
-        language=language,
-        get_day_data(
-            inputfile,
-            verbose=verbose))
-
-    if args.verbose:
-        my_announcer.show()
+        language=language)
 
     my_announcer.schedule_announcements()
-    my_announcer.start()
+    if display:
+        my_announcer.reload_timetables(os.path.expandvars(timetables),
+                                       datetime.date.today())
+        my_announcer.show()
+    else:
+        my_announcer.start()
 
 if __name__ == '__main__':
     main(**get_args())
