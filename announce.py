@@ -97,6 +97,31 @@ class Day():
         if inputfile:
             self.load(inputfile, verbose)
 
+    def add_slot(self, slot):
+        """Add a timeslot.
+        If it overlaps with existing ones, they are split as necessary."""
+        for when, existing in slots.items():
+            if existing.starts_during(slot) and existing.ends_during(slot):
+                # we overlap it completely, so supersede it:
+                del slots.items[when]
+            elif slot.starts_during(existing):
+                if slot.ends_during(existing):
+                    # split the existing slot into before and after parts
+                    self.slots[slot.end] = TimeSlot(start=slot.end,
+                                                    duration=existing.end-slot.end,
+                                                    activity=existing.activity,
+                                                    link=existing.link)
+                    existing.duration = slot.start - existing.start
+                else:
+                    # keep the beginning of the existing one
+                    existing.duration = slot.start - existing.start
+            elif slot.ends_during(existing):
+                # but we already know it doesn't start during it
+                # keep the end of the existing one
+                existing.duration = (existing.start + existing.duration) - (slot.start + slot.duration)
+                existing.start = slot.start + slot.duration
+        self.slots[slot.start] = slot
+
     def load(self, input_file, verbose=False):
         """Load a one-day timetable file.
         The file is expected to have columns ['Start', 'Duration', and 'Activity']
@@ -114,6 +139,7 @@ class Day():
             for row in csv.DictReader(instream):
                 if 'Start' not in row:
                     print("Warning: no Start in row", row, "from file", input_file)
+                    continue
                 start = datetime.datetime.combine(today, as_time(row['Start']))
                 if pending:
                     prev_start, prev_activity = pending
@@ -122,50 +148,51 @@ class Day():
                     pending = None
                 activity = row['Activity']
                 duration = row.get('Duration')
-                link = row.get('URL', '')
-                if link == "":
-                    link = None
+                link = row.get('URL')
                 if duration:
                     incoming.append(TimeSlot(start, activity,
                                              duration=duration,
-                                             link=link))
+                                             link=link or None))
                 else:
                     pending = (start, activity)
             if pending:
                 prev_start, prev_activity = pending
                 prev_duration = as_time("23:59") - as_time(prev_start)
-                incoming[prev_start] = TimeSlot(prev_start, prev_activity, prev_duration)
-            clashed = set()
-            if verbose:
-                print("merging; checking for clashes")
-            for what in incoming:
-                if verbose:
-                    print("  checking", what, "for clashes")
-                for when, already in self.slots.items():
-                    if what.clashes_with(already):
-                        print("  clash: new:", what, "existing:", already)
-                        clashed.add(when)
-                self.slots[what.start] = what
-            # TODO: split slots as needed, e.g. to put a smaller one inside a larger one, going back to the larger one afterwards
-            for clash in clashed:
-                del self.slots[clash]
-            for what in incoming:
-                self.slots[what.start] = what
+                incoming.append(TimeSlot(prev_start, prev_activity, prev_duration))
+            for what in sorted(incoming, key=lambda slot: slot.start):
+                self.add_slot(what)
 
 class Announcer():
 
     pass
 
-    def __init__(self, speech_engine, language, day=None):
+    def __init__(self,
+                 speech_engine="espeak",
+                 language="en",
+                 chimes_dir,
+                 day=None):
         self.speech_engine = speech_engine
         self.language = language
         self.day = day or Day()
         self.scheduler = sched.scheduler()
         self.talker = talkey.Talkey(preferred_languages=[self.language],
                                     engine_preference=[self.speech_engine])
+        self.chimes_dir = chimes_dir
 
     def load(self, input_file, verbose=False):
+        """Load one timetable file.
+        The slots from the file will be merged with the existing slots."""
         self.day.load(input_file, verbose)
+
+    def reload_timetables(self, timetables_directory, day):
+        """Load the timetables for the given day.
+        Any previous entries will be cleared out."""
+        self.empty_queue()
+        self.load(os.path.join(timetables_directory, "timetable.csv"))
+        if os.path.exists(dayfile := os.path.join(timetables_directory,
+                                                  day.strftime("%A")+".csv")):
+            self.load(dayfile)
+        self.schedule_chimes()
 
     def show(self):
         for slot in sorted(self.day.slots.keys()):
@@ -179,10 +206,23 @@ class Announcer():
         for start, slot in sorted(self.day.slots.items()):
             if start > now:
                 print("scheduling", self.day.slots[start], "at", start)
-                self.scheduler.enterabs(start, 1,
+                self.scheduler.enterabs(start, 2,
                                         announce, (self, slot))
+
+    def schedule_sound(self, when, what):
+        """Schedule a sound to be played at a time."""
+        self.scheduler.enterabs(when, 1, play_sound, (self, what))
+
+    def schedule_chimes(self):
+        """Add chimes to the schedule."""
+        for hour in range(6, 22):
+            self.schedule_sound()
+
     def start(self):
         self.scheduler.run()
+
+    def tick(self):
+        self.scheduler.run(blocking=False)
 
     def empty_queue(self):
         for event in self.scheduler.queue():
