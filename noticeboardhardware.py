@@ -26,7 +26,6 @@ class NoticeBoardHardware(cmd.Cmd):
         self.keyboard_status = 'unknown'
         self.moving_steps = 0
         self.pir_seen_at = 0
-        self.porch_pir_seen_at = 0
         self.music_process = None
         self.speech_process = None
         self.user_status_automatic = False
@@ -35,7 +34,7 @@ class NoticeBoardHardware(cmd.Cmd):
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(pins.PIN_PIR, GPIO.IN)
-        GPIO.setup(pins.PIN_PORCH_PIR, GPIO.IN)
+        # GPIO.setup(pins.PIN_PORCH_PIR, GPIO.IN)
         GPIO.setup(pins.PIN_RETRACTED, GPIO.IN)
         GPIO.setup(pins.PIN_TEMPERATURE, GPIO.IN)
         GPIO.setup(pins.PIN_EXTENDED, GPIO.IN)
@@ -43,7 +42,7 @@ class NoticeBoardHardware(cmd.Cmd):
         GPIO.setup(pins.PIN_SPEAKER, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_RETRACT, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_EXTEND, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(pins.PIN_PORCH_LAMP, GPIO.OUT, initial=GPIO.LOW)
+        # GPIO.setup(pins.PIN_PORCH_LAMP, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_LAMP_LEFT, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_LAMP_RIGHT, GPIO.OUT, initial=GPIO.LOW)
         self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
@@ -128,40 +127,36 @@ class NoticeBoardHardware(cmd.Cmd):
             GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
         return False
 
-    def pir_actions(self):
-        print("pir seen")
-
-    def porch_pir_actions(self):
-        pass
+    def pir_actions(self, seen):
+        self.lamps(100 if seen else 0)
 
     def do_say(self, text):
         """Pass the text to a TTS system.
         That goes via this module so we can control the speaker power switch."""
+        if self.speech_process:
+            self.speech_process.wait() # wait for the old one to finish
         self.sound(True)
-        # TODO: first check there's no existing process
-        # TODO: maybe we should have a sound queue?
-        subprocess.run(["espeak", text])
-        self.sound(False)
+        self.speech_process=subprocess.popen(["espeak", text])
         return False
 
     def do_play(self, music_filename, begin=None, end=None):
         """Pass a music file to a player.
         That goes via this module so we can control the speaker power switch."""
+        if self.music_process:
+            self.music_process.wait() # wait for the old one to finish
         self.sound(True)
-        # TODO: start the player process asynchronously, switch speaker off at end
         if music_filename.endswith(".ogg"):
-            subprocess.run(["ogg123"]
-                           + (["-k", str(begin)] if begin else [])
-                           + (["-K", str(end)] if end else [])
-                           + [music_filename])
+            self.music_process=subprocess.popen(["ogg123"]
+                                                + (["-k", str(begin)] if begin else [])
+                                                + (["-K", str(end)] if end else [])
+                                                + [music_filename])
         elif music_filename.endswith(".ly"):
             midi_file = Path(music_filename).with_suffix(".midi")
             if not midi_file.exists():
                 subprocess.run(["lilypond", music_filename])
-            subprocess.run((["timidity", midi_file]))
+            self.music_process=subprocess.run(["timidity", midi_file])
         elif music_filename.endswith(".midi"):
-            subprocess.run((["timidity", music_filename]))
-        self.sound(False)
+            self.music_process=subprocess.run(["timidity", music_filename])
         return False
 
     def do_photo(self, arg):
@@ -172,6 +167,36 @@ class NoticeBoardHardware(cmd.Cmd):
         self.camera.capture(image_filename)
         return False
         # todo: compare with previous photo in series, and drop any that are very nearly the same
+
+    def self.keyboard_step(stepmax):
+        if self.keyboard_status == 'retracting':
+            if self.retracted() or self.moving_steps > stepmax:
+                print("stopping retracting", self.moving_steps, stepmax)
+                self.keyboard_status = 'retracted'
+                GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
+                GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
+                self.moving_steps = 0
+            else:
+                self.moving_steps += 1
+        elif self.keyboard_status == 'extending':
+            if self.extended() or self.moving_steps > stepmax:
+                print("stopping extending", self.moving_steps, stepmax)
+                self.keyboard_status = 'extended'
+                GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
+                GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
+                self.moving_steps = 0
+            else:
+                self.moving_steps += 1
+
+    def self.check_for_sounds_finishing():
+        if self.speech_process and self.speech_process.poll(): # non-None if it has exited
+            self.speech_process = None
+
+        if self.music_process is None and self.speech_process is None:
+            GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
+
+        if self.music_process and self.music_process.poll(): # non-None if it has exited
+            self.music_process = None
 
     def step(self):
         """Perform one step of any active operations.
@@ -192,56 +217,21 @@ class NoticeBoardHardware(cmd.Cmd):
         for lamp in self._lamps:
             lamp.step()
 
-        stepmax = self.config['delays']['step_max']
-        if self.keyboard_status == 'retracting':
-            if self.retracted() or self.moving_steps > stepmax:
-                print("stopping retracting", self.moving_steps, stepmax)
-                self.keyboard_status = 'retracted'
-                GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
-                GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
-            else:
-                self.moving_steps += 1
-        elif self.keyboard_status == 'extending':
-            if self.extended() or self.moving_steps > stepmax:
-                print("stopping extending", self.moving_steps, stepmax)
-                self.keyboard_status = 'extended'
-                GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
-                GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
-            else:
-                self.moving_steps += 1
+        self.keyboard_step(self.config['delays']['step_max'])
 
-        if self.music_process:
-            process_result = self.music_process.poll()
-            if process_result:
-                if self.speech_process is None:
-                    GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
-                self.music_process = None
-
-        if self.speech_process:
-            process_result = self.speech_process.poll()
-            if process_result:
-                GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
-                self.speech_process = None
+        self.check_for_sounds_finishing()
 
         # TODO: read the temperature from pins.PIN_TEMPERATURE into self.temperature
 
         if GPIO.input(pins.PIN_PIR):
             if self.pir_seen_at:
                 if self.pir_seen_at + self.config['delays']['pir_delay'] < time.time():
-                    self.pir_actions()
+                    self.pir_actions(True)
             else:
                 self.pir_seen_at = time.time()
         else:
             self.pir_seen_at = 0
-
-        if GPIO.input(pins.PIN_PORCH_PIR):
-            if self.porch_pir_seen_at:
-                if self.porch_pir_seen_at + self.config['delays']['porch_pir_delay'] < time.time():
-                    self.porch_pir_actions()
-            else:
-                self.porch_pir_seen_at = time.time()
-        else:
-            self.porch_pir_seen_at = 0
+            self.pir_actions(False)
 
         return (self.keyboard_status in ('retracting', 'extending')
                     or any(lamp.changing() for lamp in self._lamps))

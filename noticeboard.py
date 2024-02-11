@@ -122,7 +122,9 @@ def main():
     photographing_duration = datetime.timedelta(0, config['camera']['duration'])
 
     controller = NoticeBoardHardware(config, expected_at_home_times)
-    announcer = announce.Announcer(chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
+    chimes_dir=os.path.expandvars("$SYNCED/music/chimes")
+    announcer = announce.Announcer(announce=lambda args: controller.do_say(args),
+                                   playsound=lambda args: controller.do_play(args))
     previous_date = datetime.date()
     announcer.reload_timetables("$SYNCED/timetables", previous_date)
 

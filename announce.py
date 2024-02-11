@@ -13,6 +13,9 @@ import time
 def sleep_timedelta(td):
     time.sleep(td.total_seconds if isinstance(td, datetime.timedelta) else td)
 
+def play_sound(announcer, sound):
+    os.system("ogg123 %s" % sound)
+
 def announce(announcer, slot):
     print(slot.activity)
     announcer.talker.say(slot.activity)
@@ -174,12 +177,12 @@ class Announcer():
     """A timeslotted day manager."""
 
     def __init__(self,
-                 speech_engine="espeak",
-                 language="en",
+                 announce=None,
+                 playsound=None,
                  chimes_dir="/usr/local/share/chimes",
                  day=None):
-        self.speech_engine = speech_engine
-        self.language = language
+        self.announce_function = announce
+        self.playsound_function = playsound
         self.day = day or Day()
         self.scheduler = sched.scheduler()
         self.talker = talkey.Talkey(preferred_languages=[self.language],
@@ -214,17 +217,26 @@ class Announcer():
             if start > now:
                 print("scheduling", self.day.slots[start], "at", start)
                 self.scheduler.enterabs(start, 2,
-                                        announce, (self, slot))
+                                        lambda args: self.announce_function(args),
+                                        (self, slot))
 
     def schedule_sound(self, when, what):
         """Schedule a sound to be played at a time."""
-        self.scheduler.enterabs(when, 1, play_sound, (self, what))
+        self.scheduler.enterabs(when, 1,
+                                lambda args: self.playsound_function(args),
+                                (self, what))
 
     def schedule_chimes(self):
         """Add chimes to the schedule."""
-        pass
-        # for hour in range(6, 22):
-        #     self.schedule_sound()
+        for hour in range(6, 22):
+            self.schedule_sound(datetime.time(hour=hour),
+                                os.path.join(self.chimes_dir, "Cambridge-chimes-hour-%02d.ogg" % hour))
+            self.schedule_sound(datetime.time(hour=hour, minute=15),
+                                os.path.join(self.chimes_dir, "Cambridge-chimes-first-quarter.ogg"))
+            self.schedule_sound(datetime.time(hour=hour, minute=30),
+                                os.path.join(self.chimes_dir, "Cambridge-chimes-second-quarter.ogg"))
+            self.schedule_sound(datetime.time(hour=hour, minute=45),
+                                os.path.join(self.chimes_dir, "Cambridge-chimes-third-quarter.ogg"))
 
     def start(self):
         self.scheduler.run()
@@ -285,25 +297,8 @@ def unit_tests():
     if not ten_thirty.clashes_with(ten):
         print("fail: not ten_thirty.clashes_with(ten)")
 
-def get_day_announcer(inputfile,
-                      extra_files=[],
-                      language='en',
-                      engine='espeak',
-                      verbose=False):
-    day = Day(inputfile,
-              verbose=verbose)
-    for extra in extra_files:
-        day.load(extra)
-    return Announcer(engine, language, day=day)
-
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--language', '-l',
-                        default='en',
-                        help="""The default language for Talkey""")
-    parser.add_argument('--engine', '-e',
-                        default='espeak',
-                        help="""The engine to use for Talkey""")
     parser.add_argument("--verbose", "-v",
                         action='store_true')
     parser.add_argument("--display", "-d",
@@ -320,9 +315,7 @@ def main(language, engine, verbose, run_tests, display, timetables):
         unit_tests()
         return
 
-    my_announcer = Announcer(
-        speech_engine=engine,
-        language=language)
+    my_announcer = Announcer()
 
     my_announcer.schedule_announcements()
     if display:
