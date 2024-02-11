@@ -14,6 +14,7 @@ import sys
 import time
 import yaml
 
+import announce
 from noticeboardhardware import NoticeBoardHardware
 
 # This is overwritten from /etc/noticeboard.conf if it's available
@@ -121,6 +122,9 @@ def main():
     photographing_duration = datetime.timedelta(0, config['camera']['duration'])
 
     controller = NoticeBoardHardware(config, expected_at_home_times)
+    announcer = announce.Announcer(chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
+    previous_date = datetime.date()
+    announcer.reload_timetables("$SYNCED/timetables", previous_date)
 
     print("noticeboard hardware controller started")
     main_loop_delay = config['delays']['main_loop']
@@ -139,6 +143,11 @@ def main():
                         running = False
                 except Exception as e:
                     print("Exception in running command:", e)
+            today = datetime.date()
+            if previous_date != today:
+                announcer.reload_timetables("$SYNCED/timetables", today)
+                previous_date = today
+            announcer.tick()
 
         # if photographing:
         #     take_photo()
