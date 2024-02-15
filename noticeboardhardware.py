@@ -2,6 +2,7 @@ from pathlib import Path
 
 import cmd
 import datetime
+import subprocess
 import time
 
 import RPi.GPIO as GPIO
@@ -136,7 +137,7 @@ class NoticeBoardHardware(cmd.Cmd):
         if self.speech_process:
             self.speech_process.wait() # wait for the old one to finish
         self.sound(True)
-        self.speech_process=subprocess.popen(["espeak", text])
+        self.speech_process=subprocess.Popen(["espeak", text])
         return False
 
     def do_play(self, music_filename, begin=None, end=None):
@@ -146,7 +147,7 @@ class NoticeBoardHardware(cmd.Cmd):
             self.music_process.wait() # wait for the old one to finish
         self.sound(True)
         if music_filename.endswith(".ogg"):
-            self.music_process=subprocess.popen(["ogg123"]
+            self.music_process=subprocess.Popen(["ogg123"]
                                                 + (["-k", str(begin)] if begin else [])
                                                 + (["-K", str(end)] if end else [])
                                                 + [music_filename])

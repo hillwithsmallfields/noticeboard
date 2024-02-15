@@ -122,9 +122,9 @@ def main():
     photographing_duration = datetime.timedelta(0, config['camera']['duration'])
 
     controller = NoticeBoardHardware(config, expected_at_home_times)
-    chimes_dir=os.path.expandvars("$SYNCED/music/chimes")
-    announcer = announce.Announcer(announce=lambda *args, **kwargs: controller.do_say(*args, **kwargs),
-                                   playsound=lambda *args, **kwargs: controller.do_play(*args, **kwargs))
+    announcer = announce.Announcer(announce=lambda contr, message, **kwargs: contr.do_say(message),
+                                   playsound=lambda contr, sound, **kwargs: controller.do_play(sound),
+                                   chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
     previous_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
 

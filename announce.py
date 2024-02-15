@@ -9,8 +9,9 @@ import os
 import sched
 import time
 
-def sleep_timedelta(td):
-    time.sleep(td.total_seconds if isinstance(td, datetime.timedelta) else td)
+# TODO: flexible start and end times
+first_hour = 6
+last_hour = 22
 
 def play_sound(announcer, sound):
     os.system("ogg123 %s" % sound)
@@ -52,9 +53,14 @@ def as_datetime(when):
     return (when
             if isinstance(when, datetime.datetime)
             else (datetime.datetime.combine(datetime.date.today(),
-                                            when.time())
+                                            when)
                   if isinstance(when, datetime.time)
-                  else (datetime.time.fromisoformat(when))))
+                  else (datetime.time.fromisoformat(when)
+                        if isinstance(when, str)
+                        else datetime.datetime.fromtimestamp(when))))
+
+def as_time_number(when):
+    return time.mktime(as_datetime(when).timetuple())
 
 class TimeSlot():
 
@@ -66,12 +72,13 @@ class TimeSlot():
                  end=None,
                  link=None,
                  sound=None):
-        self.start = as_datetime(start)
-        self.end = end or ((self.start + as_timedelta(duration))
-                           if duration
-                           else None)
+        self.start = as_time_number(start)
+        self.end = as_time_number(end or ((self.start + as_timedelta(duration).total_seconds())
+                                          if duration
+                                          else None))
         self.activity = activity
         self.link = link
+        print("made timeslot", self.__repr__(), type(self.start), type(self.end))
 
     def __repr__(self):
         return "<Activity from %s to %s doing %s>" % (self.start, self.end, self.activity)
@@ -186,7 +193,7 @@ class Announcer():
         self.announce_function = announce
         self.playsound_function = playsound
         self.day = day or Day()
-        self.scheduler = sched.scheduler(timefunc=time_now, delayfunc=sleep_timedelta)
+        self.scheduler = sched.scheduler(time.time, time.sleep)
         self.chimes_dir = chimes_dir
 
     def load(self, input_file, verbose=False):
@@ -216,19 +223,21 @@ class Announcer():
         for start, slot in sorted(self.day.slots.items()):
             if start > now:
                 print("scheduling", self.day.slots[start], "at", start)
-                self.scheduler.enterabs(start, 2,
+                self.scheduler.enterabs(as_time_number(start), 2,
                                         self.announce_function,
                                         (self, slot))
 
     def schedule_sound(self, when, what):
         """Schedule a sound to be played at a time."""
-        self.scheduler.enterabs(when, 1,
+        self.scheduler.enterabs(as_time_number(when), 1,
                                 self.playsound_function,
                                 (self, what))
 
     def schedule_chimes(self):
         """Add chimes to the schedule."""
-        for hour in range(6, 22):
+        for hour in range(max(datetime.datetime.now().time().hour,
+                              first_hour),
+                          last_hour - 1):
             self.schedule_sound(datetime.time(hour=hour),
                                 os.path.join(self.chimes_dir, "Cambridge-chimes-hour-%02d.ogg" % hour))
             self.schedule_sound(datetime.time(hour=hour, minute=15),
@@ -237,6 +246,8 @@ class Announcer():
                                 os.path.join(self.chimes_dir, "Cambridge-chimes-second-quarter.ogg"))
             self.schedule_sound(datetime.time(hour=hour, minute=45),
                                 os.path.join(self.chimes_dir, "Cambridge-chimes-third-quarter.ogg"))
+        self.schedule_sound(datetime.time(hour=last_hour),
+                            os.path.join(self.chimes_dir, "Cambridge-chimes-hour-%02d.ogg" % last_hour))
 
     def start(self):
         self.scheduler.run()
