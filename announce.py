@@ -217,13 +217,13 @@ class Announcer():
             if start > now:
                 print("scheduling", self.day.slots[start], "at", start)
                 self.scheduler.enterabs(start, 2,
-                                        lambda args: self.announce_function(args),
+                                        self.announce_function,
                                         (self, slot))
 
     def schedule_sound(self, when, what):
         """Schedule a sound to be played at a time."""
         self.scheduler.enterabs(when, 1,
-                                lambda args: self.playsound_function(args),
+                                self.playsound_function,
                                 (self, what))
 
     def schedule_chimes(self):
