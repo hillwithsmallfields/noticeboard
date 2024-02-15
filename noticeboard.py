@@ -123,8 +123,8 @@ def main():
 
     controller = NoticeBoardHardware(config, expected_at_home_times)
     chimes_dir=os.path.expandvars("$SYNCED/music/chimes")
-    announcer = announce.Announcer(announce=lambda *args, **kwargs: controller.do_say(args),
-                                   playsound=lambda *args, **kwargs: controller.do_play(args))
+    announcer = announce.Announcer(announce=lambda *args, **kwargs: controller.do_say(*args, **kwargs),
+                                   playsound=lambda *args, **kwargs: controller.do_play(*args, **kwargs))
     previous_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
 
