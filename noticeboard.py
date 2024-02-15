@@ -125,8 +125,8 @@ def main():
     chimes_dir=os.path.expandvars("$SYNCED/music/chimes")
     announcer = announce.Announcer(announce=lambda args: controller.do_say(args),
                                    playsound=lambda args: controller.do_play(args))
-    previous_date = datetime.date()
-    announcer.reload_timetables("$SYNCED/timetables", previous_date)
+    previous_date = datetime.date.today()
+    announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
 
     print("noticeboard hardware controller started")
     main_loop_delay = config['delays']['main_loop']
@@ -145,7 +145,7 @@ def main():
                         running = False
                 except Exception as e:
                     print("Exception in running command:", e)
-            today = datetime.date()
+            today = datetime.date.today()
             if previous_date != today:
                 announcer.reload_timetables("$SYNCED/timetables", today)
                 previous_date = today

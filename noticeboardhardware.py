@@ -168,7 +168,7 @@ class NoticeBoardHardware(cmd.Cmd):
         return False
         # todo: compare with previous photo in series, and drop any that are very nearly the same
 
-    def self.keyboard_step(stepmax):
+    def keyboard_step(self, stepmax):
         if self.keyboard_status == 'retracting':
             if self.retracted() or self.moving_steps > stepmax:
                 print("stopping retracting", self.moving_steps, stepmax)
@@ -188,7 +188,7 @@ class NoticeBoardHardware(cmd.Cmd):
             else:
                 self.moving_steps += 1
 
-    def self.check_for_sounds_finishing():
+    def check_for_sounds_finishing(self):
         if self.speech_process and self.speech_process.poll(): # non-None if it has exited
             self.speech_process = None
 
