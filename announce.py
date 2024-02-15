@@ -7,7 +7,6 @@ import datetime
 import numbers
 import os
 import sched
-import talkey                   # https://pypi.org/project/talkey/
 import time
 
 def sleep_timedelta(td):
@@ -18,7 +17,7 @@ def play_sound(announcer, sound):
 
 def announce(announcer, slot):
     print(slot.activity)
-    announcer.talker.say(slot.activity)
+    announcer.announce_function.say(slot.activity)
     if any((os.stat(inputfile).st_mtime > lastread
             for inputfile, lastread in announcer.last_read.items())):
         announcer.empty_queue()
@@ -185,8 +184,6 @@ class Announcer():
         self.playsound_function = playsound
         self.day = day or Day()
         self.scheduler = sched.scheduler()
-        self.talker = talkey.Talkey(preferred_languages=[self.language],
-                                    engine_preference=[self.speech_engine])
         self.chimes_dir = chimes_dir
 
     def load(self, input_file, verbose=False):
