@@ -183,7 +183,7 @@ class Announcer():
         self.announce_function = announce
         self.playsound_function = playsound
         self.day = day or Day()
-        self.scheduler = sched.scheduler()
+        self.scheduler = sched.scheduler(timefunc=datetime.time.now, delay_func=sleep_timedelta)
         self.chimes_dir = chimes_dir
 
     def load(self, input_file, verbose=False):
