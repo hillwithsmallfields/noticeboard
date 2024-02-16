@@ -242,6 +242,7 @@ class Announcer():
                             15):
             quarter = (minute% 6 0) // 15
             hour = minute // 60
+            print("adding chime for %d %d")
             if quarter == 0:
                 self.schedule_sound(datetime.time(hour=hour),
                                     os.path.join(self.chimes_dir,
