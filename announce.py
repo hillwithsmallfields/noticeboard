@@ -240,15 +240,14 @@ class Announcer():
         for minute in range(start.hour * 60 + (start.minute // 15) * 15,
                             end.hour * 60 + end.minute+1,
                             15):
-            quarter = (minute% 6 0) // 15
+            quarter = (minute % 60) // 15
             hour = minute // 60
-            print("adding chime for %d %d")
             if quarter == 0:
                 self.schedule_sound(datetime.time(hour=hour),
                                     os.path.join(self.chimes_dir,
                                                  "Cambridge-chimes-hour-%02d.ogg" % (hour if hour <= 12 else hour - 12)))
             else:
-                self.schedule_sound(datetime.time(hour=hour, minute=15),
+                self.schedule_sound(datetime.time(hour=hour, minute=quarter*15),
                                     os.path.join(self.chimes_dir,
                                                  "Cambridge-chimes-%s-quarter.ogg" % [None, "first", "second", "third"][quarter]))
 
