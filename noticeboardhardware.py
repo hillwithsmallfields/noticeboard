@@ -17,6 +17,10 @@ from lamp import Lamp
 # see https://forums.raspberrypi.com/viewtopic.php?t=278003 for driving the lamps
 # see https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20 for the temperature sensor
 
+def quench_lamps(controller):
+    controller.do_quench()
+    controller.quench_scheduled = False
+
 class NoticeBoardHardware(cmd.Cmd):
 
     pass
@@ -26,6 +30,8 @@ class NoticeBoardHardware(cmd.Cmd):
         self.scheduler = scheduler or sched.scheduler(time.time, time.sleep)
         self.expected_at_home_times = expected_at_home_times
         self.v12_is_on = False
+        self.brightness = 0
+        self.quench_scheduled = False
         self.keyboard_status = 'unknown'
         self.moving_steps = 0
         self.pir_seen_at = 0
@@ -77,11 +83,11 @@ class NoticeBoardHardware(cmd.Cmd):
         return False
 
     def lamps(self, brightness):
-        brightness = float(brightness)
-        if brightness > 0:
+        self.brightness = float(brightness)
+        if self.brightness > 0:
             self.power(True)
         for lamp in self._lamps:
-            lamp.set(brightness)
+            lamp.set(self.brightness)
 
     def do_shine(self, arg=None):
         """Switch the lamps on."""
@@ -126,15 +132,16 @@ class NoticeBoardHardware(cmd.Cmd):
             GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
             GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
         return False
-
+    
     def delayed(self, action, delay):
-        self.scheduler.enter(delay=delay, priority=2, action=action)
+        self.scheduler.enter(delay=delay, priority=2, action=action, argument=[self])
 
     def pir_actions(self, seen):
         if seen:
             self.lamps(100)
-        else:
-            self.delayed(do_quench, 10)
+        elif self.brightness > 0 and not self.quench_scheduled:
+            self.delayed(quench_lamps, 10)
+            self.quench_scheduled = True
 
     def do_say(self, text):
         """Pass the text to a TTS system.
@@ -155,14 +162,22 @@ class NoticeBoardHardware(cmd.Cmd):
             self.music_process=subprocess.Popen(["ogg123"]
                                                 + (["-k", str(begin)] if begin else [])
                                                 + (["-K", str(end)] if end else [])
-                                                + [music_filename])
+                                                + [music_filename],
+                                                stdout=subprocess.DEVNULL,
+                                                stderr=subprocess.DEVNULL)
         elif music_filename.endswith(".ly"):
             midi_file = Path(music_filename).with_suffix(".midi")
             if not midi_file.exists():
-                subprocess.run(["lilypond", music_filename])
-            self.music_process=subprocess.run(["timidity", midi_file])
+                subprocess.run(["lilypond", music_filename],
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL)
+            self.music_process=subprocess.Popen(["timidity", midi_file],
+                                                stdout=subprocess.DEVNULL,
+                                                stderr=subprocess.DEVNULL)
         elif music_filename.endswith(".midi"):
-            self.music_process=subprocess.run(["timidity", music_filename])
+            self.music_process=subprocess.Popen(["timidity", music_filename],
+                                                stdout=subprocess.DEVNULL,
+                                                stderr=subprocess.DEVNULL)
         return False
 
     def do_photo(self, arg):
@@ -195,10 +210,10 @@ class NoticeBoardHardware(cmd.Cmd):
                 self.moving_steps += 1
 
     def check_for_sounds_finishing(self):
-        if self.speech_process and self.speech_process.poll(): # non-None if it has exited
+        if self.speech_process and self.speech_process.poll() is not None: # non-None if it has exited
             self.speech_process = None
 
-        if self.music_process and self.music_process.poll(): # non-None if it has exited
+        if self.music_process and self.music_process.poll() is not None: # non-None if it has exited
             self.music_process = None
 
         if self.music_process is None and self.speech_process is None:
@@ -248,7 +263,7 @@ class NoticeBoardHardware(cmd.Cmd):
         keyboard_extended = self.extended()
         keyboard_retracted = self.retracted()
         print('(message "12V power on: %s")' % self.v12_is_on)
-        print('(message "PIR: s")' % PIR_active)
+        print('(message "PIR: %s")' % PIR_active)
         print('(message "Keyboard status: %s")' % self.keyboard_status)
         return False
 
