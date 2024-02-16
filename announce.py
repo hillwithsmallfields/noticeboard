@@ -208,7 +208,7 @@ class Announcer():
         if os.path.exists(dayfile := os.path.join(timetables_directory,
                                                   day.strftime("%A")+".csv")):
             self.load(dayfile)
-        self.schedule_chimes()
+        self.schedule_chimes(start_time="06:30", end_time="22:00")
 
     def show(self):
         for slot in sorted(self.day.slots.keys()):
@@ -231,21 +231,24 @@ class Announcer():
                                 self.playsound_function,
                                 (self, what))
 
-    def schedule_chimes(self):
+    def schedule_chimes(self, start_time="06:30", end_time="22:00"):
         """Add chimes to the schedule."""
-        for hour in range(max(datetime.datetime.now().time().hour,
-                              first_hour),
-                          last_hour - 1):
-            self.schedule_sound(datetime.time(hour=hour),
-                                os.path.join(self.chimes_dir, "Cambridge-chimes-hour-%02d.ogg" % hour))
-            self.schedule_sound(datetime.time(hour=hour, minute=15),
-                                os.path.join(self.chimes_dir, "Cambridge-chimes-first-quarter.ogg"))
-            self.schedule_sound(datetime.time(hour=hour, minute=30),
-                                os.path.join(self.chimes_dir, "Cambridge-chimes-second-quarter.ogg"))
-            self.schedule_sound(datetime.time(hour=hour, minute=45),
-                                os.path.join(self.chimes_dir, "Cambridge-chimes-third-quarter.ogg"))
-        self.schedule_sound(datetime.time(hour=last_hour),
-                            os.path.join(self.chimes_dir, "Cambridge-chimes-hour-%02d.ogg" % last_hour))
+        start = datetime.time.fromisoformat(start_time)
+        end = datetime.time.fromisoformat(end_time)
+
+        for minute in range(start.hour * 60 + start.minute,
+                            end.hour * 60 + end.minute+1,
+                            15):
+            quarter = int((minute%60)/15)
+            hour = int(minute/60)
+            if quarter == 0:
+                self.schedule_sound(datetime.time(hour=hour),
+                                    os.path.join(self.chimes_dir,
+                                                 "Cambridge-chimes-hour-%02d.ogg" % (hour if hour <= 12 else hour - 12)))
+            else:
+                self.schedule_sound(datetime.time(hour=hour, minute=15),
+                                    os.path.join(self.chimes_dir,
+                                                 "Cambridge-chimes-%s-quarter.ogg" % [None, "first", "second", "third"][quarter]))
 
     def start(self):
         self.scheduler.run()
