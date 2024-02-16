@@ -233,14 +233,15 @@ class Announcer():
 
     def schedule_chimes(self, start_time="06:30", end_time="22:00"):
         """Add chimes to the schedule."""
-        start = datetime.time.fromisoformat(start_time)
+        start = max(datetime.time.fromisoformat(start_time),
+                    datetime.datetime.now().time())
         end = datetime.time.fromisoformat(end_time)
 
-        for minute in range(start.hour * 60 + start.minute,
+        for minute in range(start.hour * 60 + (start.minute // 15) * 15,
                             end.hour * 60 + end.minute+1,
                             15):
-            quarter = int((minute%60)/15)
-            hour = int(minute/60)
+            quarter = (minute% 6 0) // 15
+            hour = minute // 60
             if quarter == 0:
                 self.schedule_sound(datetime.time(hour=hour),
                                     os.path.join(self.chimes_dir,
