@@ -9,6 +9,7 @@ import functools
 import os
 import subprocess
 import re
+import sched
 import select
 import sys
 import time
@@ -116,24 +117,27 @@ def main():
     expected_at_home_times = {day: [convert_interval(interval_string)
                                     for interval_string in interval_string_list]
                               for day, interval_string_list in config['expected_occupancy'].items()}
-    print("noticeboard hardware controller starting")
+    print('(message "noticeboard hardware controller starting")')
     global photographing
     global photographing_duration
     photographing_duration = datetime.timedelta(0, config['camera']['duration'])
 
-    controller = NoticeBoardHardware(config, expected_at_home_times)
-    announcer = announce.Announcer(announce=lambda contr, message, **kwargs: contr.do_say(message),
+    scheduler = sched.scheduler(time.time, time.sleep)
+    controller = NoticeBoardHardware(config=config,
+                                     scheduler=scheduler,
+                                     expected_at_home_times=expected_at_home_times)
+    announcer = announce.Announcer(scheduler=scheduler,
+                                   announce=lambda contr, message, **kwargs: contr.do_say(message),
                                    playsound=lambda contr, sound, **kwargs: controller.do_play(sound),
                                    chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
     previous_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
 
-    print("noticeboard hardware controller started")
+    print('(message "noticeboard hardware controller started")')
     main_loop_delay = config['delays']['main_loop']
     running = True
     while running:
         active = controller.step()
-        print("active", active)
         # if we're stepping through an activity, ignore commands for now:
         if active:
             time.sleep(config['delays']['motor'])
@@ -144,7 +148,7 @@ def main():
                     if controller.onecmd(sys.stdin.readline().strip()):
                         running = False
                 except Exception as e:
-                    print("Exception in running command:", e)
+                    print('(message "Exception in running command: %s")' % e)
             today = datetime.date.today()
             if previous_date != today:
                 announcer.reload_timetables("$SYNCED/timetables", today)
@@ -155,7 +159,9 @@ def main():
         #     take_photo()
         #     if datetime.datetime.now() >= photographing:
         #         photographing = False
-    print("noticeboard hardware controller stopped")
+    controller.do_quiet()
+    controller.do_quench()
+    print('(message "noticeboard hardware controller stopped")')
 
 if __name__ == "__main__":
     main()

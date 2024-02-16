@@ -17,7 +17,7 @@ def play_sound(announcer, sound):
     os.system("ogg123 %s" % sound)
 
 def announce(announcer, slot):
-    print(slot.activity)
+    print('(message "%s")' % slot.activity)
     announcer.announce_function.say(slot.activity)
     if any((os.stat(inputfile).st_mtime > lastread
             for inputfile, lastread in announcer.last_read.items())):
@@ -78,7 +78,6 @@ class TimeSlot():
                                           else None))
         self.activity = activity
         self.link = link
-        print("made timeslot", self.__repr__(), type(self.start), type(self.end))
 
     def __repr__(self):
         return "<Activity from %s to %s doing %s>" % (self.start, self.end, self.activity)
@@ -148,7 +147,6 @@ class Day():
         if input_file is None:
             return
         self.last_read[input_file] = os.stat(input_file).st_mtime
-        print("loading", input_file)
         today = datetime.date.today()
         with open (input_file) as instream:
             # When a start but no duration is given, hold it here
@@ -157,7 +155,7 @@ class Day():
             incoming = []
             for row in csv.DictReader(instream):
                 if 'Start' not in row:
-                    print("Warning: no Start in row", row, "from file", input_file)
+                    print('(message "Warning: no Start in row %d from file %s")' % (row, input_file))
                     continue
                 start = datetime.datetime.combine(today, as_time(row['Start']))
                 if pending:
@@ -189,11 +187,12 @@ class Announcer():
                  announce=None,
                  playsound=None,
                  chimes_dir="/usr/local/share/chimes",
+                 scheduler=None,
                  day=None):
         self.announce_function = announce
         self.playsound_function = playsound
         self.day = day or Day()
-        self.scheduler = sched.scheduler(time.time, time.sleep)
+        self.scheduler = scheduler or sched.scheduler(time.time, time.sleep)
         self.chimes_dir = chimes_dir
 
     def load(self, input_file, verbose=False):
@@ -222,7 +221,6 @@ class Announcer():
         now = datetime.datetime.now()
         for start, slot in sorted(self.day.slots.items()):
             if start > now:
-                print("scheduling", self.day.slots[start], "at", start)
                 self.scheduler.enterabs(as_time_number(start), 2,
                                         self.announce_function,
                                         (self, slot))

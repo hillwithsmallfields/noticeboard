@@ -2,6 +2,7 @@ from pathlib import Path
 
 import cmd
 import datetime
+import sched
 import subprocess
 import time
 
@@ -20,8 +21,9 @@ class NoticeBoardHardware(cmd.Cmd):
 
     pass
 
-    def __init__(self, config, expected_at_home_times):
+    def __init__(self, config, scheduler, expected_at_home_times):
         self.config = config
+        self.scheduler = scheduler or sched.scheduler(time.time, time.sleep)
         self.expected_at_home_times = expected_at_home_times
         self.v12_is_on = False
         self.keyboard_status = 'unknown'
@@ -50,16 +52,15 @@ class NoticeBoardHardware(cmd.Cmd):
         self.camera = picamera.PiCamera()
 
     def power(self, on):
-        print("switching 12V power", "on" if on else "off")
         GPIO.output(pins.PIN_PSU, GPIO.LOW if on else GPIO.HIGH)
         self.v12_is_on = on
 
-    def do_on(self, arg):
+    def do_on(self, arg=None):
         """Switch the 12V power on."""
         self.power(True)
         return False
 
-    def do_off(self, arg):
+    def do_off(self, arg=None):
         """Switch the 12V power off."""
         self.power(False)
         return False
@@ -67,11 +68,11 @@ class NoticeBoardHardware(cmd.Cmd):
     def sound(self, is_on):
         GPIO.output(pins.PIN_SPEAKER, GPIO.LOW if is_on else GPIO.HIGH)
 
-    def do_speaker(self, arg):
+    def do_speaker(self, arg=None):
         self.sound(True)
         return False
 
-    def do_quiet(self, arg):
+    def do_quiet(self, arg=None):
         self.sound(False)
         return False
 
@@ -82,15 +83,13 @@ class NoticeBoardHardware(cmd.Cmd):
         for lamp in self._lamps:
             lamp.set(brightness)
 
-    def do_shine(self, arg):
+    def do_shine(self, arg=None):
         """Switch the lamps on."""
-        print("switching lamps on")
         self.lamps(100)
         return False
 
-    def do_quench(self, arg):
+    def do_quench(self, arg=None):
         """Switch the lamps off."""
-        print("switching lamps off")
         self.lamps(0)
         return False
 
@@ -103,13 +102,13 @@ class NoticeBoardHardware(cmd.Cmd):
     def do_extend(self, arg):
         """Slide the keyboard drawer out."""
         if self.keyboard_status == 'extended':
-            print("keyboard already extended")
+            print('(message "keyboard already extended")')
         else:
             if self.keyboard_status != 'extending':
                 self.moving_steps = 0
             self.power(True)
             self.keyboard_status = 'extending'
-            print("starting to extend keyboard tray")
+            print('(message "starting to extend keyboard tray")')
             GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
             GPIO.output(pins.PIN_EXTEND, GPIO.HIGH)
         return False
@@ -117,19 +116,25 @@ class NoticeBoardHardware(cmd.Cmd):
     def do_retract(self, arg):
         """Slide the keyboard drawer back in."""
         if self.keyboard_status == 'retracted':
-            print("keyboard already retracted")
+            print('(message "keyboard already retracted")')
         else:
             if self.keyboard_status != 'retracting':
                 self.moving_steps = 0
             self.power(True)
             self.keyboard_status = 'retracting'
-            print("starting to retract keyboard tray")
+            print('(message "starting to retract keyboard tray")')
             GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
             GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
         return False
 
+    def delayed(self, action, delay):
+        self.scheduler.enter(delay=delay, priority=2, action=action)
+
     def pir_actions(self, seen):
-        self.lamps(100 if seen else 0)
+        if seen:
+            self.lamps(100)
+        else:
+            self.delayed(do_quench, 10)
 
     def do_say(self, text):
         """Pass the text to a TTS system.
@@ -164,7 +169,7 @@ class NoticeBoardHardware(cmd.Cmd):
         """Capture a photo and store it with a timestamp in the filename."""
         image_filename = os.path.join(self.config['camera']['directory'],
                                       datetime.datetime.now().isoformat()+".jpg")
-        print("taking photo into", image_filename)
+        print('(message "taking photo into %s")' % image_filename)
         self.camera.capture(image_filename)
         return False
         # todo: compare with previous photo in series, and drop any that are very nearly the same
@@ -172,7 +177,7 @@ class NoticeBoardHardware(cmd.Cmd):
     def keyboard_step(self, stepmax):
         if self.keyboard_status == 'retracting':
             if self.retracted() or self.moving_steps > stepmax:
-                print("stopping retracting", self.moving_steps, stepmax)
+                print('(message "stopping retracting %d %d")' % (self.moving_steps, stepmax))
                 self.keyboard_status = 'retracted'
                 GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
                 GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
@@ -181,7 +186,7 @@ class NoticeBoardHardware(cmd.Cmd):
                 self.moving_steps += 1
         elif self.keyboard_status == 'extending':
             if self.extended() or self.moving_steps > stepmax:
-                print("stopping extending", self.moving_steps, stepmax)
+                print('(message "stopping extending %d %d")' % (self.moving_steps, stepmax))
                 self.keyboard_status = 'extended'
                 GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
                 GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
@@ -193,11 +198,11 @@ class NoticeBoardHardware(cmd.Cmd):
         if self.speech_process and self.speech_process.poll(): # non-None if it has exited
             self.speech_process = None
 
-        if self.music_process is None and self.speech_process is None:
-            GPIO.output(pins.PIN_SPEAKER, GPIO.LOW)
-
         if self.music_process and self.music_process.poll(): # non-None if it has exited
             self.music_process = None
+
+        if self.music_process is None and self.speech_process is None:
+            self.do_quiet()
 
     def step(self):
         """Perform one step of any active operations.
@@ -242,9 +247,9 @@ class NoticeBoardHardware(cmd.Cmd):
         PIR_active = GPIO.input(pins.PIN_PIR)
         keyboard_extended = self.extended()
         keyboard_retracted = self.retracted()
-        print("12V power on:", self.v12_is_on)
-        print("PIR:", PIR_active)
-        print("Keyboard status:", self.keyboard_status)
+        print('(message "12V power on: %s")' % self.v12_is_on)
+        print('(message "PIR: s")' % PIR_active)
+        print('(message "Keyboard status: %s")' % self.keyboard_status)
         return False
 
     def do_at_home(self, arg):

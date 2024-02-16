@@ -1,6 +1,6 @@
 ;;; noticeboard.el --- interface to noticeboard hardware  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2018, 2021, 2023  John Sturdy
+;; Copyright (C) 2018, 2021, 2023, 2024  John Sturdy
 
 ;; Author: John Sturdy <john.sturdy@grapeshot.com>
 ;; Keywords: hardware
@@ -37,7 +37,7 @@
 
 (defun noticeboard-start-process ()
   "Connect to the hardware control program on the noticeboard."
-  ;; TODO: The user must be in a group that is allowed GPIO access?
+  ;; TODO: Connect to a socket instead?
   (setq noticeboard-process
 	(start-process "noticeboard"
 		       nil
