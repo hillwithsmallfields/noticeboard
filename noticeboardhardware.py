@@ -2,6 +2,7 @@ from pathlib import Path
 
 import cmd
 import datetime
+import os
 import sched
 import subprocess
 import time
@@ -119,6 +120,10 @@ class NoticeBoardHardware(cmd.Cmd):
             GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
         return False
 
+    def do_stop(self):
+        GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
+        GPIO.output(pins.PIN_RETRACT, GPIO.LOW)
+        
     def do_report(self, arg):
         """Output the status of the noticeboard hardware."""
         PIR_active = GPIO.input(pins.PIN_PIR)
@@ -126,6 +131,8 @@ class NoticeBoardHardware(cmd.Cmd):
         keyboard_retracted = self.retracted()
         print('(message "12V power on: %s")' % self.v12_is_on)
         print('(message "PIR: %s")' % PIR_active)
+        print('(message "PIR on for %d")' % self.pir_on_for)
+        print('(message "PIR off for %d")' % self.pir_off_for)
         print('(message "Keyboard status: %s")' % self.keyboard_status)
         return False
 
@@ -148,9 +155,6 @@ class NoticeBoardHardware(cmd.Cmd):
 
     def do_quit(self, arg):
         return True
-
-    def delayed(self, action, delay):
-        self.scheduler.enter(delay=delay, priority=2, action=action, argument=[self])
 
     def do_say(self, text):
         """Pass the text to a TTS system.
@@ -195,7 +199,6 @@ class NoticeBoardHardware(cmd.Cmd):
                                       datetime.datetime.now().isoformat()+".jpg")
         print('(message "taking photo into %s")' % image_filename)
         self.camera.capture(image_filename)
-        return False
         # todo: compare with previous photo in series, and drop any that are very nearly the same
         return False
 
@@ -214,10 +217,10 @@ class NoticeBoardHardware(cmd.Cmd):
             lamp.set(self.brightness)
 
     def extended(self):
-        return not GPIO.input(pins.PIN_EXTENDED)
+        return GPIO.input(pins.PIN_EXTENDED)
 
     def retracted(self):
-        return not GPIO.input(pins.PIN_RETRACTED)
+        return GPIO.input(pins.PIN_RETRACTED)
 
     def check_temperature(self):
         # TODO: read the temperature from pins.PIN_TEMPERATURE into self.temperature
@@ -229,17 +232,21 @@ class NoticeBoardHardware(cmd.Cmd):
                 self.pir_on_for += 1
                 if self.pir_on_for in self.pir_on_actions:
                     for command in self.pir_on_actions[self.pir_on_for]:
+                        print('(message "Running delayed PIR-on command %s after %d steps")' % (command, self.pir_on_for))
                         self.onecmd(command)
             else:
+                print('(message "PIR going on after being off for %d steps")' % self.pir_off_for)
                 self.pir_off_for = 0
             self.pir_already_on = True
         else:
             if self.pir_already_on:
+                print('(message "PIR going off after being on for %d steps")' % self.pir_on_for)
                 self.pir_on_for = 0
             else:
                 self.pir_off_for += 1
                 if self.pir_off_for in self.pir_off_actions:
                     for command in self.pir_off_actions[self.pir_off_for]:
+                        print('(message "Running delayed PIR-off command %s after %d steps")' % (command, self.pir_off_for))
                         self.onecmd(command)
             self.pir_already_on = False
 
@@ -281,10 +288,15 @@ class NoticeBoardHardware(cmd.Cmd):
         if self.music_process is None and self.speech_process is None:
             self.do_quiet()
 
-    def step(self):
+    def step(self, long_step):
         """Perform one step of any active operations.
+
         Returns whether there's anything going on that needs
-        the event loop to run fast."""
+        the event loop to run fast.
+
+        The long_step argument indicates that a full step delay has
+        been done, i.t. that the event loop is running slowly.
+        """
 
         for lamp in self._lamps:
             lamp.step()
@@ -295,7 +307,8 @@ class NoticeBoardHardware(cmd.Cmd):
 
         self.check_temperature()
 
-        self.check_pir()
+        if long_step:
+            self.check_pir()
 
         return (self.keyboard_status in ('retracting', 'extending')
-                    or any(lamp.changing() for lamp in self._lamps))
+                or any(lamp.changing() for lamp in self._lamps))

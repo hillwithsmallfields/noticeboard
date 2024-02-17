@@ -134,8 +134,8 @@ def main():
 
     controller.add_pir_on_action(3, "photo")
 
-    controller.add_pir_on_action(4, "extend"))
-    controller.add_pir_off_action(15, "retract")))
+    controller.add_pir_on_action(4, "extend")
+    controller.add_pir_off_action(15, "retract")
 
     previous_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
@@ -143,8 +143,9 @@ def main():
     print('(message "noticeboard hardware controller started")')
     main_loop_delay = config['delays']['main_loop']
     running = True
+    active = False
     while running:
-        active = controller.step()
+        active = controller.step(not active)
         # if we're stepping through an activity, ignore commands for now:
         if active:
             time.sleep(config['delays']['motor'])
