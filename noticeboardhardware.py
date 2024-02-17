@@ -6,6 +6,8 @@ import sched
 import subprocess
 import time
 
+from collections import defaultdict
+
 import RPi.GPIO as GPIO
 import picamera
 
@@ -16,10 +18,6 @@ from lamp import Lamp
 
 # see https://forums.raspberrypi.com/viewtopic.php?t=278003 for driving the lamps
 # see https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20 for the temperature sensor
-
-def quench_lamps(controller):
-    controller.do_quench()
-    controller.quench_scheduled = False
 
 class NoticeBoardHardware(cmd.Cmd):
 
@@ -34,12 +32,21 @@ class NoticeBoardHardware(cmd.Cmd):
         self.quench_scheduled = False
         self.keyboard_status = 'unknown'
         self.moving_steps = 0
-        self.pir_seen_at = 0
+
+        self.pir_already_on = False
+        self.pir_on_for = 0
+        self.pir_off_for = 0
+        self.pir_on_actions = defaultdict(list)
+        self.pir_off_actions = defaultdict(list)
+
         self.music_process = None
         self.speech_process = None
+
         self.user_status_automatic = False
         self.user_status = 'unknown'
+
         self.temperature = None
+
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(pins.PIN_PIR, GPIO.IN)
@@ -132,16 +139,9 @@ class NoticeBoardHardware(cmd.Cmd):
             GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
             GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
         return False
-    
+
     def delayed(self, action, delay):
         self.scheduler.enter(delay=delay, priority=2, action=action, argument=[self])
-
-    def pir_actions(self, seen):
-        if seen:
-            self.lamps(100)
-        elif self.brightness > 0 and not self.quench_scheduled:
-            self.delayed(quench_lamps, 10)
-            self.quench_scheduled = True
 
     def do_say(self, text):
         """Pass the text to a TTS system.
@@ -188,6 +188,38 @@ class NoticeBoardHardware(cmd.Cmd):
         self.camera.capture(image_filename)
         return False
         # todo: compare with previous photo in series, and drop any that are very nearly the same
+
+    def check_temperature(self):
+        # TODO: read the temperature from pins.PIN_TEMPERATURE into self.temperature
+        pass
+
+    def check_pir(self):
+        if GPIO.input(pins.PIN_PIR):
+            if self.pir_already_on:
+                self.pir_on_for += 1
+                if self.pir_on_for in self.pir_on_actions:
+                    for command in self.pir_on_actions[self.pir_on_for]:
+                        self.onecmd(command)
+            else:
+                self.pir_off_for = 0
+            self.pir_already_on = True
+        else:
+            if self.pir_already_on:
+                self.pir_on_for = 0
+            else:
+                self.pir_off_for += 1
+                if self.pir_off_for in self.pir_off_actions:
+                    for command in self.pir_off_actions[self.pir_off_for]:
+                        self.onecmd(command)
+            self.pir_already_on = False
+
+    def add_pir_on_action(self, delay, action):
+        """Arrange a command to be run some number of steps after the PIR detector goes on."""
+        self.pir_on_actions[delay].append(action)
+
+    def add_pir_off_action(self, delay, action):
+        """Arrange a command to be run some number of steps after the PIR detector goes off."""
+        self.pir_off_actions[delay].append(action)
 
     def keyboard_step(self, stepmax):
         if self.keyboard_status == 'retracting':
@@ -242,17 +274,9 @@ class NoticeBoardHardware(cmd.Cmd):
 
         self.check_for_sounds_finishing()
 
-        # TODO: read the temperature from pins.PIN_TEMPERATURE into self.temperature
+        self.check_temperature()
 
-        if GPIO.input(pins.PIN_PIR):
-            if self.pir_seen_at:
-                if self.pir_seen_at + self.config['delays']['pir_delay'] < time.time():
-                    self.pir_actions(True)
-            else:
-                self.pir_seen_at = time.time()
-        else:
-            self.pir_seen_at = 0
-            self.pir_actions(False)
+        self.check_pir()
 
         return (self.keyboard_status in ('retracting', 'extending')
                     or any(lamp.changing() for lamp in self._lamps))
