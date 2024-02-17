@@ -104,8 +104,6 @@ def rec_update(d, u, i=""):
             d[k] = v
     return d
 
-enable_pir = False
-
 def main():
     """Interface to the hardware of my noticeboard.
     This is meant for my noticeboard Emacs software to send commands to."""
@@ -130,6 +128,15 @@ def main():
                                    announce=lambda contr, message, **kwargs: contr.do_say(message),
                                    playsound=lambda contr, sound, **kwargs: controller.do_play(sound),
                                    chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
+
+    controller.add_pir_on_action(2, "shine")
+    controller.add_pir_off_action(10, "quench")
+
+    controller.add_pir_on_action(3, "photo")
+
+    controller.add_pir_on_action(4, "extend"))
+    controller.add_pir_off_action(15, "retract")))
+
     previous_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
 
@@ -151,16 +158,14 @@ def main():
                     print('(message "Exception in running command: %s")' % e)
             today = datetime.date.today()
             if previous_date != today:
-                announcer.reload_timetables("$SYNCED/timetables", today)
+                announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"), today)
                 previous_date = today
             announcer.tick()
 
-        # if photographing:
-        #     take_photo()
-        #     if datetime.datetime.now() >= photographing:
-        #         photographing = False
-    controller.do_quiet()
-    controller.do_quench()
+    controller.onecmd("quiet")
+    controller.onecmd("quench")
+    controller.onecmd("off")
+
     print('(message "noticeboard hardware controller stopped")')
 
 if __name__ == "__main__":

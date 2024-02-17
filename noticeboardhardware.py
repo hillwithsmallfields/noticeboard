@@ -64,10 +64,6 @@ class NoticeBoardHardware(cmd.Cmd):
         self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
         self.camera = picamera.PiCamera()
 
-    def power(self, on):
-        GPIO.output(pins.PIN_PSU, GPIO.LOW if on else GPIO.HIGH)
-        self.v12_is_on = on
-
     def do_on(self, arg=None):
         """Switch the 12V power on."""
         self.power(True)
@@ -76,10 +72,6 @@ class NoticeBoardHardware(cmd.Cmd):
     def do_off(self, arg=None):
         """Switch the 12V power off."""
         self.power(False)
-        return False
-
-    def sound(self, is_on):
-        GPIO.output(pins.PIN_SPEAKER, GPIO.LOW if is_on else GPIO.HIGH)
 
     def do_speaker(self, arg=None):
         self.sound(True)
@@ -88,13 +80,6 @@ class NoticeBoardHardware(cmd.Cmd):
     def do_quiet(self, arg=None):
         self.sound(False)
         return False
-
-    def lamps(self, brightness):
-        self.brightness = float(brightness)
-        if self.brightness > 0:
-            self.power(True)
-        for lamp in self._lamps:
-            lamp.set(self.brightness)
 
     def do_shine(self, arg=None):
         """Switch the lamps on."""
@@ -105,12 +90,6 @@ class NoticeBoardHardware(cmd.Cmd):
         """Switch the lamps off."""
         self.lamps(0)
         return False
-
-    def extended(self):
-        return not GPIO.input(pins.PIN_EXTENDED)
-
-    def retracted(self):
-        return not GPIO.input(pins.PIN_RETRACTED)
 
     def do_extend(self, arg):
         """Slide the keyboard drawer out."""
@@ -139,6 +118,36 @@ class NoticeBoardHardware(cmd.Cmd):
             GPIO.output(pins.PIN_EXTEND, GPIO.LOW)
             GPIO.output(pins.PIN_RETRACT, GPIO.HIGH)
         return False
+
+    def do_report(self, arg):
+        """Output the status of the noticeboard hardware."""
+        PIR_active = GPIO.input(pins.PIN_PIR)
+        keyboard_extended = self.extended()
+        keyboard_retracted = self.retracted()
+        print('(message "12V power on: %s")' % self.v12_is_on)
+        print('(message "PIR: %s")' % PIR_active)
+        print('(message "Keyboard status: %s")' % self.keyboard_status)
+        return False
+
+    def do_at_home(self, arg):
+        """Tell the system I am at home."""
+        self.user_status = 'home'
+        self.user_status_automatic = False
+        return False
+
+    def do_away(self, arg):
+        """Tell the system I am away."""
+        self.user_status = 'away'
+        self.user_status_automatic = False
+        return False
+
+    def do_auto(self, arg):
+        """Tell the system I'm not telling it whether I'm at home."""
+        self.user_status_automatic = True
+        return False
+
+    def do_quit(self, arg):
+        return True
 
     def delayed(self, action, delay):
         self.scheduler.enter(delay=delay, priority=2, action=action, argument=[self])
@@ -188,6 +197,27 @@ class NoticeBoardHardware(cmd.Cmd):
         self.camera.capture(image_filename)
         return False
         # todo: compare with previous photo in series, and drop any that are very nearly the same
+        return False
+
+    def power(self, on):
+        GPIO.output(pins.PIN_PSU, GPIO.LOW if on else GPIO.HIGH)
+        self.v12_is_on = on
+
+    def sound(self, is_on):
+        GPIO.output(pins.PIN_SPEAKER, GPIO.LOW if is_on else GPIO.HIGH)
+
+    def lamps(self, brightness):
+        self.brightness = float(brightness)
+        if self.brightness > 0:
+            self.power(True)
+        for lamp in self._lamps:
+            lamp.set(self.brightness)
+
+    def extended(self):
+        return not GPIO.input(pins.PIN_EXTENDED)
+
+    def retracted(self):
+        return not GPIO.input(pins.PIN_RETRACTED)
 
     def check_temperature(self):
         # TODO: read the temperature from pins.PIN_TEMPERATURE into self.temperature
@@ -256,17 +286,6 @@ class NoticeBoardHardware(cmd.Cmd):
         Returns whether there's anything going on that needs
         the event loop to run fast."""
 
-        # TODO: select the day for this
-        # if self.user_status_automatic:
-        #     now = datetime.datetime.now().time()
-        #     this_minute = now.hour * 60 + now.minute
-        #     at_home = False
-        #     for begin, end in self.expected_at_home_times:
-        #         if begin <= this_minute <= end:
-        #             at_home = True
-        #             break
-        #     self.user_status = 'home' if at_home else 'away'
-
         for lamp in self._lamps:
             lamp.step()
 
@@ -280,33 +299,3 @@ class NoticeBoardHardware(cmd.Cmd):
 
         return (self.keyboard_status in ('retracting', 'extending')
                     or any(lamp.changing() for lamp in self._lamps))
-
-    def do_report(self, arg):
-        """Output the status of the noticeboard hardware."""
-        PIR_active = GPIO.input(pins.PIN_PIR)
-        keyboard_extended = self.extended()
-        keyboard_retracted = self.retracted()
-        print('(message "12V power on: %s")' % self.v12_is_on)
-        print('(message "PIR: %s")' % PIR_active)
-        print('(message "Keyboard status: %s")' % self.keyboard_status)
-        return False
-
-    def do_at_home(self, arg):
-        """Tell the system I am at home."""
-        self.user_status = 'home'
-        self.user_status_automatic = False
-        return False
-
-    def do_away(self, arg):
-        """Tell the system I am away."""
-        self.user_status = 'away'
-        self.user_status_automatic = False
-        return False
-
-    def do_auto(self, arg):
-        """Tell the system I'm not telling it whether I'm at home."""
-        self.user_status_automatic = True
-        return False
-
-    def do_quit(self, arg):
-        return True
