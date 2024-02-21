@@ -2,6 +2,7 @@ from pathlib import Path
 
 import cmd
 import datetime
+import os
 import sched
 import subprocess
 import time
@@ -281,7 +282,7 @@ class NoticeBoardHardware(cmd.Cmd):
         if self.music_process is None and self.speech_process is None:
             self.do_quiet()
 
-    def step(self):
+    def step(self, active):
         """Perform one step of any active operations.
         Returns whether there's anything going on that needs
         the event loop to run fast."""
@@ -291,11 +292,10 @@ class NoticeBoardHardware(cmd.Cmd):
 
         self.keyboard_step(self.config['delays']['step_max'])
 
-        self.check_for_sounds_finishing()
-
-        self.check_temperature()
-
-        self.check_pir()
+        if not active:
+            self.check_for_sounds_finishing()
+            self.check_temperature()
+            self.check_pir()
 
         return (self.keyboard_status in ('retracting', 'extending')
-                    or any(lamp.changing() for lamp in self._lamps))
+                or any(lamp.changing() for lamp in self._lamps))

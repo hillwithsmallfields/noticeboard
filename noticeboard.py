@@ -21,11 +21,8 @@ from noticeboardhardware import NoticeBoardHardware
 # This is overwritten from /etc/noticeboard.conf if it's available
 config = {
     'delays': {
-        'lamp': 0.01,
-        'motor': 0.01,
-        'main_loop': 1.0,
-        'pir_delay': 2.0,
-        'porch_pir_delay': 2.0,
+        'fast': 0.01,
+        'slow': 1.0,
         'step_max': 200},
     'expected_occupancy': {
         # default for a 9-5 worker who stays in at weekends
@@ -141,15 +138,15 @@ def main():
     announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
 
     print('(message "noticeboard hardware controller started")')
-    main_loop_delay = config['delays']['main_loop']
     running = True
+    active = False
     while running:
-        active = controller.step()
+        active = controller.step(active)
         # if we're stepping through an activity, ignore commands for now:
         if active:
-            time.sleep(config['delays']['motor'])
+            time.sleep(config['delays']['fast'])
         else:
-            ready, _, _ = select.select([sys.stdin], [], [], main_loop_delay)
+            ready, _, _ = select.select([sys.stdin], [], [], config['delays']['slow'])
             if sys.stdin in ready:
                 try:
                     if controller.onecmd(sys.stdin.readline().strip()):
