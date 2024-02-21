@@ -15,7 +15,7 @@ import sys
 import time
 import yaml
 
-import announce
+from timetable_announcer import announce
 from noticeboardhardware import NoticeBoardHardware
 
 # This is overwritten from /etc/noticeboard.conf if it's available
