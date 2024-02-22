@@ -95,7 +95,7 @@ class NoticeBoardHardware(cmd.Cmd):
     def do_extend(self, arg):
         """Slide the keyboard drawer out."""
         if self.keyboard_status == 'extended':
-            print('(message "keyboard already extended")')
+            pass # print('(message "keyboard already extended")')
         else:
             if self.keyboard_status != 'extending':
                 self.moving_steps = 0
@@ -109,7 +109,7 @@ class NoticeBoardHardware(cmd.Cmd):
     def do_retract(self, arg):
         """Slide the keyboard drawer back in."""
         if self.keyboard_status == 'retracted':
-            print('(message "keyboard already retracted")')
+            pass # print('(message "keyboard already retracted")')
         else:
             if self.keyboard_status != 'retracting':
                 self.moving_steps = 0
