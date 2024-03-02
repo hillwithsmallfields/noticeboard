@@ -215,10 +215,10 @@ class NoticeBoardHardware(cmd.Cmd):
             lamp.set(self.brightness)
 
     def extended(self):
-        return not GPIO.input(pins.PIN_EXTENDED)
+        return GPIO.input(pins.PIN_EXTENDED)
 
     def retracted(self):
-        return not GPIO.input(pins.PIN_RETRACTED)
+        return GPIO.input(pins.PIN_RETRACTED)
 
     def check_temperature(self):
         # TODO: read the temperature from pins.PIN_TEMPERATURE into self.temperature
