@@ -4,8 +4,10 @@
 
 # See README.md for details
 
+import contextlib
 import datetime
 import functools
+import io
 import os
 import subprocess
 import re
@@ -174,9 +176,14 @@ def main():
                     if data:
                         command = data.decode('utf-8')
                         try:
-                            if controller.onecmd(command):
-                                # logout:
-                                watch_on.remove(channel)
+                            with contextlib.redirect_stdout(io.StringIO()) as captured:
+                                if controller.onecmd(command):
+                                    # logout:
+                                    watch_on.remove(channel)
+                                    channel.shutdown(socket.SHUT_RDWR)
+                            output = captured.getvalue()
+                            if output:
+                                channel.sendall(str(output))
                         except Exception as e:
                             print("Exception in running command from socket:", e)
                     else: # channel is closed
