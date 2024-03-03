@@ -11,6 +11,7 @@ import subprocess
 import re
 import sched
 import select
+import socket
 import sys
 import time
 import yaml
@@ -137,6 +138,11 @@ def main():
     previous_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
 
+    incoming = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    incoming.setblocking(0)
+    incoming.bind('localhost', 10101)
+    incoming.listen()
+
     print('(message "noticeboard hardware controller started")')
     running = True
     active = False
@@ -146,13 +152,20 @@ def main():
         if active:
             time.sleep(config['delays']['fast'])
         else:
-            ready, _, _ = select.select([sys.stdin], [], [], config['delays']['slow'])
+            ready, _, _ = select.select([sys.stdin, incoming],
+                                        [],
+                                        [],
+                                        config['delays']['slow'])
+            print("ready:", ready)
             if sys.stdin in ready:
                 try:
                     if controller.onecmd(sys.stdin.readline().strip()):
                         running = False
                 except Exception as e:
                     print('(message "Exception in running command: %s")' % e)
+            if incoming in ready:
+                data, address = incoming.recvfrom()
+                print("got", str(data), "from", address)
             today = datetime.date.today()
             if previous_date != today:
                 announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"), today)
