@@ -140,32 +140,47 @@ def main():
 
     incoming = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     incoming.setblocking(0)
-    incoming.bind('localhost', 10101)
+    incoming.bind(('localhost', 10101))
     incoming.listen()
 
     print('(message "noticeboard hardware controller started")')
     running = True
     active = False
+    watch_on = [sys.stdin, incoming]
     while running:
         active = controller.step(active)
         # if we're stepping through an activity, ignore commands for now:
         if active:
             time.sleep(config['delays']['fast'])
         else:
-            ready, _, _ = select.select([sys.stdin, incoming],
+            ready, _, _ = select.select(watch_on,
                                         [],
                                         [],
                                         config['delays']['slow'])
-            print("ready:", ready)
-            if sys.stdin in ready:
-                try:
-                    if controller.onecmd(sys.stdin.readline().strip()):
-                        running = False
-                except Exception as e:
-                    print('(message "Exception in running command: %s")' % e)
-            if incoming in ready:
-                data, address = incoming.recvfrom()
-                print("got", str(data), "from", address)
+            for channel in ready:
+                if channel == incoming:
+                    conn, new_address = incoming.accept()
+                    print("new connection from", new_address)
+                    watch_on.append(conn)
+                elif sys.stdin in ready:
+                    try:
+                        if controller.onecmd(sys.stdin.readline().strip()):
+                            running = False
+                    except Exception as e:
+                        print('(message "Exception in running command: %s")' % e)
+                else:
+                    data, address = channel.recvfrom(1024)
+                    print("got", str(data), "from", address)
+                    if data:
+                        command = data.decode('utf-8')
+                        try:
+                            if controller.onecmd(command):
+                                # logout:
+                                watch_on.remove(channel)
+                        except Exception as e:
+                            print("Exception in running command from socket:", e)
+                    else: # channel is closed
+                        watch_on.remove(channel)
             today = datetime.date.today()
             if previous_date != today:
                 announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"), today)
