@@ -26,6 +26,11 @@ config = {
     'delays': {
         'fast': 0.01,
         'slow': 1.0,
+        'shine': 2,
+        'quench': 10,
+        'photo': 3,
+        'extend': 4,
+        'retract', 15,
         'step_max': 200},
     'expected_occupancy': {
         # default for a 9-5 worker who stays in at weekends
@@ -129,13 +134,10 @@ def main():
                                    playsound=lambda contr, sound, **kwargs: controller.do_play(sound),
                                    chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
 
-    controller.add_pir_on_action(2, "shine")
-    controller.add_pir_off_action(10, "quench")
-
-    controller.add_pir_on_action(3, "photo")
-
-    controller.add_pir_on_action(4, "extend")
-    controller.add_pir_off_action(15, "retract")
+    for on_action in ['shine', 'photo', 'extend']:
+        controller.add_pir_on_action(config['delays'][on_action], on_action)
+    for off_action in ['quench', 'retract']:
+        controller.add_pir_off_action(config['delays'][off_action], off_action)
 
     previous_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
