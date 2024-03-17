@@ -49,7 +49,8 @@ config = {
     'camera': {
         'duration': 180,
         'directory': "/var/spool/camera"},
-    'pir_log_file': "/var/log/pir"
+    'pir_log_file': "/var/log/pir",
+    'port': 10101
 }
 
 camera = None
@@ -146,7 +147,7 @@ def main():
 
     incoming = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     incoming.setblocking(0)
-    incoming.bind(('localhost', 10101))
+    incoming.bind(('localhost', int(config['port'])))
     incoming.listen()
 
     print('(message "noticeboard hardware controller started")')
