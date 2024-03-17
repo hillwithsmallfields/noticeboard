@@ -4,7 +4,9 @@ import cmd
 import datetime
 import os
 import sched
+import shlex
 import subprocess
+import sys
 import time
 
 from collections import defaultdict
@@ -48,7 +50,9 @@ class NoticeBoardHardware(cmd.Cmd):
 
         self.temperature = None
 
-        self.settings_updates = {}
+        self.config_updates = {}
+
+        self.stdout = sys.stdout # needed for error messages by cmd
 
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
@@ -150,13 +154,33 @@ class NoticeBoardHardware(cmd.Cmd):
         return False
 
     def do_quit(self, arg):
+        """Tell the event loop to finish."""
         return True
 
-    def set(self, arg):
-        print("setting", arg, type(arg))
-
-    def delayed(self, action, delay):
-        self.scheduler.enter(delay=delay, priority=2, action=action, argument=[self])
+    def do_config(self, arg):
+        """Add a change to the config, for the event loop to update the config from."""
+        argparts = shlex.split(arg)
+        target = self.config_updates
+        for level in argparts[:-2]:
+            if level not in target:
+                new_level = dict()
+                target[level] = new_level
+                target = new_level
+        name = argparts[-2]
+        value = argparts[-1]
+        try:
+            target[name] = int(value)
+        except ValueError:
+            try:
+                target[name] = float(value)
+            except ValueError:
+                match value:
+                    case 'True':
+                        target[name] = True
+                    case 'False':
+                        target[name] = False
+                    case other:
+                        target[name] = value
 
     def do_say(self, text):
         """Pass the text to a TTS system.
@@ -206,13 +230,17 @@ class NoticeBoardHardware(cmd.Cmd):
         return False
 
     def power(self, on):
+        """Switch the 12V PSU on or off."""
         GPIO.output(pins.PIN_PSU, GPIO.LOW if on else GPIO.HIGH)
         self.v12_is_on = on
 
     def sound(self, is_on):
+        """Switch the active speaker power on or off."""
         GPIO.output(pins.PIN_SPEAKER, GPIO.LOW if is_on else GPIO.HIGH)
 
     def lamps(self, brightness):
+        """Set the brightness of both lamps.
+        The actual brightness will be adjusted in several steps."""
         self.brightness = float(brightness)
         if self.brightness > 0:
             self.power(True)
@@ -220,9 +248,11 @@ class NoticeBoardHardware(cmd.Cmd):
             lamp.set(self.brightness)
 
     def extended(self):
+        """Return whether the keyboard tray is extended, according to the limit switch."""
         return GPIO.input(pins.PIN_EXTENDED)
 
     def retracted(self):
+        """Return whether the keyboard tray is retracted, according to the limit switch."""
         return GPIO.input(pins.PIN_RETRACTED)
 
     def check_temperature(self):
@@ -230,6 +260,7 @@ class NoticeBoardHardware(cmd.Cmd):
         pass
 
     def check_pir(self):
+        """Check for state changes of the PIR detector."""
         if GPIO.input(pins.PIN_PIR):
             if self.pir_already_on:
                 self.pir_on_for += 1
@@ -258,6 +289,7 @@ class NoticeBoardHardware(cmd.Cmd):
         self.pir_off_actions[delay].append(action)
 
     def keyboard_step(self, stepmax):
+        """Operate the keyboard tray motor controller according to the required and actual positions."""
         if self.keyboard_status == 'retracting':
             if self.retracted() or self.moving_steps > stepmax:
                 print('(message "stopping retracting %d %d")' % (self.moving_steps, stepmax))
@@ -278,6 +310,8 @@ class NoticeBoardHardware(cmd.Cmd):
                 self.moving_steps += 1
 
     def check_for_sounds_finishing(self):
+        """Check for any sound processes having finished.
+        If they have all finished, switch the active speaker power off."""
         if self.speech_process and self.speech_process.poll() is not None: # non-None if it has exited
             self.speech_process = None
 

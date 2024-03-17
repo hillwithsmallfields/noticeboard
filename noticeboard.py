@@ -16,6 +16,7 @@ import select
 import socket
 import sys
 import time
+import traceback
 import yaml
 
 from timetable_announcer import announce
@@ -30,7 +31,7 @@ config = {
         'quench': 10,
         'photo': 3,
         'extend': 4,
-        'retract', 15,
+        'retract': 15,
         'step_max': 200},
     'expected_occupancy': {
         # default for a 9-5 worker who stays in at weekends
@@ -145,65 +146,66 @@ def main():
     previous_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
 
-    incoming = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    incoming.setblocking(0)
-    incoming.bind(('localhost', int(config['port'])))
-    incoming.listen()
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as incoming:
+        incoming.setblocking(0)
+        incoming.bind(('localhost', int(config['port'])))
+        incoming.listen()
 
-    print('(message "noticeboard hardware controller started")')
-    running = True
-    active = False
-    watch_on = [sys.stdin, incoming]
-    while running:
-        active = controller.step(active)
-        rec_update(config, controller.settings_updates)
-        controller.settings_updates = {}
-        # if we're stepping through an activity, ignore commands for now:
-        if active:
-            time.sleep(config['delays']['fast'])
-        else:
-            ready, _, _ = select.select(watch_on,
-                                        [],
-                                        [],
-                                        config['delays']['slow'])
-            for channel in ready:
-                if channel == incoming:
-                    conn, new_address = incoming.accept()
-                    print("new connection from", new_address)
-                    watch_on.append(conn)
-                elif sys.stdin in ready:
-                    try:
-                        if controller.onecmd(sys.stdin.readline().strip()):
-                            running = False
-                    except Exception as e:
-                        print('(message "Exception in running command: %s")' % e)
-                else:
-                    data, address = channel.recvfrom(1024)
-                    print("got", str(data), "from", address)
-                    if data:
-                        command = data.decode('utf-8')
+        print('(message "noticeboard hardware controller started")')
+        running = True
+        active = False
+        watch_on = [sys.stdin, incoming]
+        while running:
+            active = controller.step(active)
+            rec_update(config, controller.config_updates)
+            controller.config_updates = {}
+            # if we're stepping through an activity, ignore commands for now:
+            if active:
+                time.sleep(config['delays']['fast'])
+            else:
+                ready, _, _ = select.select(watch_on,
+                                            [],
+                                            [],
+                                            config['delays']['slow'])
+                for channel in ready:
+                    if channel == incoming:
+                        conn, new_address = incoming.accept()
+                        print("new connection from", new_address)
+                        watch_on.append(conn)
+                    elif sys.stdin in ready:
                         try:
-                            with contextlib.redirect_stdout(io.StringIO()) as captured:
-                                if controller.onecmd(command):
-                                    # logout:
-                                    watch_on.remove(channel)
-                                    channel.shutdown(socket.SHUT_RDWR)
-                            output = captured.getvalue()
-                            if output:
-                                channel.sendall(str(output))
+                            if controller.onecmd(sys.stdin.readline().strip()):
+                                running = False
                         except Exception as e:
-                            print("Exception in running command from socket:", e)
-                    else: # channel is closed
-                        watch_on.remove(channel)
-            today = datetime.date.today()
-            if previous_date != today:
-                announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"), today)
-                previous_date = today
-            announcer.tick()
+                            print('(message "Exception in running command: %s")' % e)
+                            traceback.print_exception(e)
+                    else:
+                        data, address = channel.recvfrom(1024)
+                        print("got", str(data), "from", address)
+                        if data:
+                            command = data.decode('utf-8')
+                            try:
+                                with contextlib.redirect_stdout(io.StringIO()) as captured:
+                                    if controller.onecmd(command):
+                                        # logout:
+                                        watch_on.remove(channel)
+                                        channel.shutdown(socket.SHUT_RDWR)
+                                output = captured.getvalue()
+                                if output:
+                                    channel.sendall(str(output))
+                            except Exception as e:
+                                print("Exception in running command from socket:", e)
+                        else: # channel is closed
+                            watch_on.remove(channel)
+                today = datetime.date.today()
+                if previous_date != today:
+                    announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"), today)
+                    previous_date = today
+                announcer.tick()
 
-    controller.onecmd("quiet")
-    controller.onecmd("quench")
-    controller.onecmd("off")
+        controller.onecmd("quiet")
+        controller.onecmd("quench")
+        controller.onecmd("off")
 
     print('(message "noticeboard hardware controller stopped")')
 
