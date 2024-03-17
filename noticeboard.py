@@ -109,13 +109,15 @@ def rec_update(d, u, i=""):
             d[k] = v
     return d
 
-def main():
-    """Interface to the hardware of my noticeboard.
-    This is meant for my noticeboard Emacs software to send commands to."""
-    config_file_name = "/etc/noticeboard.conf"
+def read_config_file(config, config_file_name):
     if os.path.isfile(config_file_name):
         with open(os.path.expanduser(os.path.expandvars(config_file_name))) as config_file:
             rec_update(config, yaml.safe_load(config_file))
+
+def main():
+    """Interface to the hardware of my noticeboard.
+    This is meant for my noticeboard Emacs software to send commands to."""
+    read_config_file(config, "/etc/noticeboard.conf")
     global expected_at_home_times
     expected_at_home_times = {day: [convert_interval(interval_string)
                                     for interval_string in interval_string_list]
@@ -153,6 +155,8 @@ def main():
     watch_on = [sys.stdin, incoming]
     while running:
         active = controller.step(active)
+        rec_update(config, controller.settings_updates)
+        controller.settings_updates = {}
         # if we're stepping through an activity, ignore commands for now:
         if active:
             time.sleep(config['delays']['fast'])

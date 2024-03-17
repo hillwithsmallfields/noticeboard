@@ -48,6 +48,8 @@ class NoticeBoardHardware(cmd.Cmd):
 
         self.temperature = None
 
+        self.settings_updates = {}
+
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(pins.PIN_PIR, GPIO.IN)
@@ -149,6 +151,9 @@ class NoticeBoardHardware(cmd.Cmd):
 
     def do_quit(self, arg):
         return True
+
+    def set(self, arg):
+        print("setting", arg, type(arg))
 
     def delayed(self, action, delay):
         self.scheduler.enter(delay=delay, priority=2, action=action, argument=[self])
