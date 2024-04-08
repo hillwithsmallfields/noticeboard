@@ -47,6 +47,11 @@ config = {
                    "17:30--23:30"],
         'Saturday': ["08:00--23:30"],
         'Sunday': ["08:00--23:30"]},
+    'chiming_times': {
+        'Default': ("05:30", "22:00"),
+        'Saturday': ("08:30", "22:00"),
+        'Sunday': ("06:00", "22:00"),
+    },
     'camera': {
         'duration': 180,
         'directory': "/var/spool/camera"},
@@ -144,7 +149,9 @@ def main():
         controller.add_pir_off_action(config['delays'][off_action], off_action)
 
     previous_date = datetime.date.today()
-    announcer.reload_timetables(os.path.expandvars ("$SYNCED/timetables"), previous_date)
+    announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
+                                config['chiming_times'],
+                                previous_date)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as incoming:
         incoming.setblocking(0)
