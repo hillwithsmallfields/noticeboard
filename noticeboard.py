@@ -206,7 +206,9 @@ def main():
                             watch_on.remove(channel)
                 today = datetime.date.today()
                 if previous_date != today:
-                    announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"), today)
+                    announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
+                                                config['chiming_times'],
+                                                today)
                     previous_date = today
                 announcer.tick()
 
