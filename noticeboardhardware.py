@@ -54,6 +54,8 @@ class NoticeBoardHardware(cmd.Cmd):
 
         self.stdout = sys.stdout # needed for error messages by cmd
 
+        self.logstream = open(os.path.expanduser("~/noticeboard.log"), 'a')
+
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(pins.PIN_PIR, GPIO.IN)
@@ -70,6 +72,10 @@ class NoticeBoardHardware(cmd.Cmd):
         GPIO.setup(pins.PIN_LAMP_RIGHT, GPIO.OUT, initial=GPIO.LOW)
         self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
         self.camera = picamera.PiCamera()
+
+    def log(self, message):
+        self.logstream.write(datetime.datetime.now().isoformat() + ": " + message + "\n")
+        self.logstream.flush()
 
     def do_on(self, arg=None):
         """Switch the 12V power on."""
@@ -195,9 +201,11 @@ class NoticeBoardHardware(cmd.Cmd):
         """Pass a music file to a player.
         That goes via this module so we can control the speaker power switch."""
         if self.music_process:
+            self.log("waiting for old music process to finish")
             self.music_process.wait() # wait for the old one to finish
         self.sound(True)
         if music_filename.endswith(".ogg"):
+            self.log("playing ogg file %s" + music_filename)
             self.music_process=subprocess.Popen(["ogg123"]
                                                 + (["-k", str(begin)] if begin else [])
                                                 + (["-K", str(end)] if end else [])
@@ -205,6 +213,7 @@ class NoticeBoardHardware(cmd.Cmd):
                                                 stdout=subprocess.DEVNULL,
                                                 stderr=subprocess.DEVNULL)
         elif music_filename.endswith(".ly"):
+            self.log("playing lilypond file %s" + music_filename)
             midi_file = Path(music_filename).with_suffix(".midi")
             if not midi_file.exists():
                 subprocess.run(["lilypond", music_filename],
@@ -214,6 +223,7 @@ class NoticeBoardHardware(cmd.Cmd):
                                                 stdout=subprocess.DEVNULL,
                                                 stderr=subprocess.DEVNULL)
         elif music_filename.endswith(".midi"):
+            self.log("playing midi file %s" + music_filename)
             self.music_process=subprocess.Popen(["timidity", music_filename],
                                                 stdout=subprocess.DEVNULL,
                                                 stderr=subprocess.DEVNULL)
@@ -316,9 +326,11 @@ class NoticeBoardHardware(cmd.Cmd):
             self.speech_process = None
 
         if self.music_process and self.music_process.poll() is not None: # non-None if it has exited
+            self.log("music process exited")
             self.music_process = None
 
         if self.music_process is None and self.speech_process is None:
+            self.log("switching speaker off")
             self.do_quiet()
 
     def step(self, active):
