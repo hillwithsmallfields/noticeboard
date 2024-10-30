@@ -22,6 +22,8 @@ from lamp import Lamp
 # see https://forums.raspberrypi.com/viewtopic.php?t=278003 for driving the lamps
 # see https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20 for the temperature sensor
 
+COUNTDOWN_START = 3
+
 class NoticeBoardHardware(cmd.Cmd):
 
     pass
@@ -44,6 +46,7 @@ class NoticeBoardHardware(cmd.Cmd):
 
         self.music_process = None
         self.speech_process = None
+        self.speaker_off_countdown = COUNTDOWN_START
 
         self.user_status_automatic = False
         self.user_status = 'unknown'
@@ -323,15 +326,20 @@ class NoticeBoardHardware(cmd.Cmd):
         """Check for any sound processes having finished.
         If they have all finished, switch the active speaker power off."""
         if self.speech_process and self.speech_process.poll() is not None: # non-None if it has exited
+            self.log("speech process exited")
+            self.speaker_off_countdown = COUNTDOWN_START
             self.speech_process = None
 
         if self.music_process and self.music_process.poll() is not None: # non-None if it has exited
             self.log("music process exited")
+            self.speaker_off_countdown = COUNTDOWN_START
             self.music_process = None
 
         if self.music_process is None and self.speech_process is None:
-            self.log("switching speaker off")
-            self.do_quiet()
+            self.speaker_off_countdown -= 1
+            if self.speaker_off_countdown == 0:
+                self.log("switching speaker off")
+                self.do_quiet()
 
     def step(self, active):
         """Perform one step of any active operations.
