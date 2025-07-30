@@ -1,5 +1,5 @@
 #!/bin/bash
 
-source env/bin/activate
+source noticeboard.env/bin/activate
 
 ./noticeboard.py $*
