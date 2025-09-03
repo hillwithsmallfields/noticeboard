@@ -84,13 +84,15 @@ def main():
                                     for interval_string in interval_string_list]
                               for day, interval_string_list in config('house', 'expected_occupancy').items()}
     print('(message "noticeboard hardware controller starting")')
+    verbose = False
     global photographing
     global photographing_duration
     photographing_duration = datetime.timedelta(0, config('noticeboard', 'camera', 'duration'))
 
     scheduler = sched.scheduler(time.time, time.sleep)
     controller = NoticeBoardHardware(scheduler=scheduler,
-                                     expected_at_home_times=expected_at_home_times)
+                                     expected_at_home_times=expected_at_home_times,
+                                     verbose=verbose)
     announcer = announce.Announcer(scheduler=scheduler,
                                    announce=lambda contr, message, **kwargs: controller.do_say(message),
                                    playsound=lambda contr, sound, **kwargs: controller.do_play(sound),
