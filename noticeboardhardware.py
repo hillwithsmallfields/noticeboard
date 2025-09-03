@@ -65,13 +65,14 @@ def filenames_for_music(partial_filename):
     get_music_files()
     partial_filename = partial_filename.lower().replace('_', ' ')
     if partial_filename in music_files:
+        print("exact match for music", partial_filename, "which is", music_files[partial_filename])
         return music_files[partial_filename]
     else:
         possibles = set(music_files.keys())
         for word in partial_filename.split(' '):
             possibles = {name for name in possibles if word in name}
         print("music files matching", partial_filename, "are:", possibles)
-        return list(possibles)[0]
+        return list(possibles) if possibles else None
 
 def signal_emacs(signal):
     if os.path.exists(KIOSK_EMACS_PID_FILE):
@@ -307,8 +308,9 @@ class NoticeBoardHardware(cmd.Cmd):
         """Pass a music file to a player.
         That goes via this module so we can control the speaker power switch."""
         if self.music_process:
-            self.log("waiting for old music process to finish")
+            self.log("waiting for old music process %s to finish" % self.music_process)
             self.music_process.wait() # wait for the old one to finish
+            self.music_process = None
         if music_filename.endswith(".ogg"):
             self.log("playing ogg file %s", music_filename)
             self.sound(True)
@@ -337,11 +339,13 @@ class NoticeBoardHardware(cmd.Cmd):
                 self.sound(True)
                 print("Playing music files", music_files)
                 for music_file in music_files:
-                    self.music_process=oggplay(music_file)
                     if self.music_process:
                         # TODO: non-blocking queuing system
-                        self.log("waiting for old music process to finish when playing multiple tracks consecutively")
+                        self.log("waiting for old music process to finish")
+                        print("waiting for old music process", self.music_process, "to finish")
                         self.music_process.wait() # wait for the old one to finish
+                        self.music_process = None
+                    self.music_process=oggplay(music_file)
         return False
 
     def do_list_tracks(self, arg):
