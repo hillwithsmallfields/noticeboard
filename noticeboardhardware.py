@@ -270,6 +270,10 @@ class NoticeBoardHardware(cmd.Cmd):
         self.logstream = None
         return True
 
+    def do_date(self, arg):
+        """Print the date and time as seen by the noticeboard system."""
+        print(datetime.datetime.now().isoformat(timespec='seconds'))
+
     def do_config(self, arg):
         """Add a change to the config, for the event loop to update the config from."""
         argparts = shlex.split(arg)
