@@ -86,7 +86,8 @@ class NoticeBoardHardware(cmd.Cmd):
     def __init__(self,
                  scheduler,
                  expected_at_home_times,
-                 speech_engine="espeak"):
+                 speech_engine="espeak",
+                 verbose=False):
         self.scheduler = scheduler or sched.scheduler(time.time, time.sleep)
         self.expected_at_home_times = expected_at_home_times
         self.speech_engine = speech_engine
@@ -118,6 +119,7 @@ class NoticeBoardHardware(cmd.Cmd):
 
         self.stdout = sys.stdout # needed for error messages by cmd
 
+        self.verbose = verbose
         self.logstream = open(os.path.expanduser("~/noticeboard.log"), 'a')
 
         GPIO.setwarnings(False)
@@ -215,7 +217,7 @@ class NoticeBoardHardware(cmd.Cmd):
         print('(message "Countdown to switching speaker off: %d")' % self.speaker_off_countdown)
         print('(message "Time on server: %s")' % datetime.datetime.now().isoformat())
         clips_dir = motion_monitor.get_clips_directory()
-        if os.path.isdir(clips_dir):
+        if clips_dir and os.path.isdir(clips_dir):
             print('(message "Camera clips: %d bytes")' % int(subprocess.run(["du", "-b", clips_dir], capture_output=True)
                                                              .stdout
                                                              .split(b'\t')[0]))
@@ -223,6 +225,8 @@ class NoticeBoardHardware(cmd.Cmd):
                            key=lambda f: f['created'])
             if clips:
                 print('(message "Most recent camera clip at: %s")' % clips[-1]['created'])
+        else:
+            print('(message "Motion detection possibly not running")')    
         return False
 
     def do_trim(self, arg):
@@ -351,7 +355,7 @@ class NoticeBoardHardware(cmd.Cmd):
         """Capture a photo and store it with a timestamp in the filename."""
         image_filename = os.path.join(config('noticeboard', 'camera', 'directory'),
                                       datetime.datetime.now().isoformat()+".jpg")
-        print('(message "taking photo into %s")' % image_filename)
+        self.log('(message "taking photo into %s")', image_filename)
         self.camera.capture_file(image_filename)
         return False
         # todo: compare with previous photo in series, and drop any that are very nearly the same
@@ -359,11 +363,15 @@ class NoticeBoardHardware(cmd.Cmd):
 
     def power(self, on):
         """Switch the 12V PSU on or off."""
+        if self.verbose:
+            self.log("setting 12V power %s", on)
         GPIO.output(pins.PIN_PSU, GPIO.LOW if on else GPIO.HIGH)
         self.v12_is_on = on
 
     def sound(self, is_on):
         """Switch the active speaker power on or off."""
+        if self.verbose:
+            self.log("setting sound %s", on)
         GPIO.output(pins.PIN_SPEAKER, GPIO.LOW if is_on else GPIO.HIGH)
 
     def lamps(self, brightness):
