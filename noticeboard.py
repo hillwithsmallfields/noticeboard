@@ -4,10 +4,17 @@
 
 # See README.md for details
 
+# When starting the noticeboard system with "runuser" from init.d, we
+# have "/" as cwd, and importing RPi.GPIO (which is done when we
+# "import noticeboardhardware") opens a file in the current directory
+# (for notifications), which doesn't work in "/", so we need to go
+# into a writable directory first.
+import os
+os.chdir("/tmp")
+
 import contextlib
 import datetime
 import io
-import os
 import re
 import sched
 import select
