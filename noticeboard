@@ -8,29 +8,7 @@ NB_LOG=/tmp/noticeboard.log
 
 NB_DIR=/home/jcgs/open-projects/github.com/hillwithsmallfields/noticeboard
 
-# This script can be run from the init.d environment under 'runuser',
-# which doesn't set all these up correctly:
-export BIBLE=/home/jcgs/library/bible
-export ORGLISP=/home/jcgs/open-projects/github.com/hillwithsmallfields/JCGS-org-mode/lisp
-export MY_PROJECTS=/home/jcgs/open-projects/github.com/hillwithsmallfields
-export HANDLE=jcgs
-export EDITOR=emacsclient
-export SYNCED=/home/jcgs/Sync
-export LOGNAME=jcgs
-export MY_ELISP=/home/jcgs/open-projects/github.com/hillwithsmallfields/JCGS-emacs
-export HOME=/home/jcgs
-export VEHICLES=/home/jcgs/Sync/vehicles
-export WRITING=/home/jcgs/Sync/writing
-export MYSELFORG=/home/jcgs/myself/org
-export GATHERED=/home/jcgs/library
-export SCRIPTS=/home/jcgs/open-projects/github.com/hillwithsmallfields/JCGS-scripts
-export EHOME=/home/jcgs
-export USER=jcgs
-export WWW_HOME=/home/jcgs/Sync/local-www/index.html
-export LANGUAGES=/home/jcgs/Sync/languages
-export OPEN_PROJECTS=/home/jcgs/open-projects
-export ORG=/home/jcgs/Sync/org
-
+source $NB_DIR/set-nb-env-vars
 source $NB_DIR/noticeboard.env/bin/activate
 
 while [ ! -f $STOP_NOTICEBOARD_FILE ]
