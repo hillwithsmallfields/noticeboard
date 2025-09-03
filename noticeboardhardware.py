@@ -349,10 +349,10 @@ class NoticeBoardHardware(cmd.Cmd):
 
     def do_photo(self, arg):
         """Capture a photo and store it with a timestamp in the filename."""
-        image_filename = os.path.join(config('camera', 'directory'),
+        image_filename = os.path.join(config('noticeboard', 'camera', 'directory'),
                                       datetime.datetime.now().isoformat()+".jpg")
         print('(message "taking photo into %s")' % image_filename)
-        self.camera.capture(image_filename)
+        self.camera.capture_file(image_filename)
         return False
         # todo: compare with previous photo in series, and drop any that are very nearly the same
         return False
