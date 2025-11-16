@@ -6,10 +6,8 @@
 
 import contextlib
 import datetime
-import functools
 import io
 import os
-import subprocess
 import re
 import sched
 import select
@@ -141,6 +139,7 @@ def main():
     announcer = announce.Announcer(scheduler=scheduler,
                                    announce=lambda contr, message, **kwargs: contr.do_say(message),
                                    playsound=lambda contr, sound, **kwargs: controller.do_play(sound),
+                                   chiming_times=config.get('chiming_times'),
                                    chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
 
     for on_action in ['shine', 'photo', 'extend']:
