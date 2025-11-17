@@ -82,9 +82,13 @@ class NoticeBoardHardware(cmd.Cmd):
         self.camera = picamera.PiCamera()
 
     def log(self, message, *message_data):
-        self.logstream.write(datetime.datetime.now().isoformat()
-                             + ": " + (message % message_data) + "\n")
-        self.logstream.flush()
+        log_text = datetime.datetime.now().isoformat() + ": " + (message % message_data)
+        if self.logstream:
+            self.logstream.write(log_text + "\n")
+            self.logstream.flush()
+        else:
+            print(log_text)
+
 
     def do_on(self, arg=None):
         """Switch the 12V power on."""
@@ -170,6 +174,8 @@ class NoticeBoardHardware(cmd.Cmd):
 
     def do_quit(self, arg):
         """Tell the event loop to finish."""
+        close(self.logstream)
+        self.logstream = None
         return True
 
     def do_config(self, arg):
