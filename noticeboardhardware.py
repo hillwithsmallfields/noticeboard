@@ -89,7 +89,6 @@ class NoticeBoardHardware(cmd.Cmd):
         else:
             print(log_text)
 
-
     def do_on(self, arg=None):
         """Switch the 12V power on."""
         self.power(True)
@@ -349,11 +348,12 @@ class NoticeBoardHardware(cmd.Cmd):
             self.music_process = None
 
         if self.music_process is None and self.speech_process is None:
-            self.speaker_off_countdown -= 1
-            self.log("countdown to switching speaker off: %d", self.speaker_off_countdown)
-            if self.speaker_off_countdown == 0:
-                self.log("switching speaker off")
-                self.do_quiet()
+            if self.speaker_off_countdown > 0:
+                self.speaker_off_countdown -= 1
+                self.log("countdown to switching speaker off: %d", self.speaker_off_countdown)
+                if self.speaker_off_countdown == 0:
+                    self.log("switching speaker off")
+                    self.do_quiet()
 
     def step(self, active):
         """Perform one step of any active operations.
