@@ -28,10 +28,15 @@ class NoticeBoardHardware(cmd.Cmd):
 
     pass
 
-    def __init__(self, config, scheduler, expected_at_home_times):
+    def __init__(self,
+                 config,
+                 scheduler,
+                 expected_at_home_times,
+                 speech_engine="espeak"):
         self.config = config
         self.scheduler = scheduler or sched.scheduler(time.time, time.sleep)
         self.expected_at_home_times = expected_at_home_times
+        self.speech_engine = speech_engine
         self.v12_is_on = False
         self.brightness = 0
         self.quench_scheduled = False
@@ -198,7 +203,7 @@ class NoticeBoardHardware(cmd.Cmd):
         if self.speech_process:
             self.speech_process.wait() # wait for the old one to finish
         self.sound(True)
-        self.speech_process=subprocess.Popen(["espeak", text])
+        self.speech_process=subprocess.Popen([self.speech_engine, text])
         return False
 
     def do_play(self, music_filename, begin=None, end=None):
