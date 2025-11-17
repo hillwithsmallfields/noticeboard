@@ -137,7 +137,7 @@ def main():
                                      scheduler=scheduler,
                                      expected_at_home_times=expected_at_home_times)
     announcer = announce.Announcer(scheduler=scheduler,
-                                   announce=lambda contr, message, **kwargs: contr.do_say(message),
+                                   announce=lambda contr, message, **kwargs: controller.do_say(message),
                                    playsound=lambda contr, sound, **kwargs: controller.do_play(sound),
                                    chiming_times=config.get('chiming_times'),
                                    chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
