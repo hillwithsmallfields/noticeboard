@@ -76,8 +76,9 @@ class NoticeBoardHardware(cmd.Cmd):
         self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
         self.camera = picamera.PiCamera()
 
-    def log(self, message):
-        self.logstream.write(datetime.datetime.now().isoformat() + ": " + message + "\n")
+    def log(self, message, *message_data):
+        self.logstream.write(datetime.datetime.now().isoformat()
+                             + ": " + (message % message_data) + "\n")
         self.logstream.flush()
 
     def do_on(self, arg=None):
@@ -208,7 +209,7 @@ class NoticeBoardHardware(cmd.Cmd):
             self.music_process.wait() # wait for the old one to finish
         self.sound(True)
         if music_filename.endswith(".ogg"):
-            self.log("playing ogg file %s" + music_filename)
+            self.log("playing ogg file %s", music_filename)
             self.music_process=subprocess.Popen(["ogg123"]
                                                 + (["-k", str(begin)] if begin else [])
                                                 + (["-K", str(end)] if end else [])
@@ -216,9 +217,10 @@ class NoticeBoardHardware(cmd.Cmd):
                                                 stdout=subprocess.DEVNULL,
                                                 stderr=subprocess.DEVNULL)
         elif music_filename.endswith(".ly"):
-            self.log("playing lilypond file %s" + music_filename)
+            self.log("playing lilypond file %s", music_filename)
             midi_file = Path(music_filename).with_suffix(".midi")
             if not midi_file.exists():
+                self.log("converting lilypond file %s to midi file %s", music_filename, midi_file)
                 subprocess.run(["lilypond", music_filename],
                                stdout=subprocess.DEVNULL,
                                stderr=subprocess.DEVNULL)
@@ -226,7 +228,7 @@ class NoticeBoardHardware(cmd.Cmd):
                                                 stdout=subprocess.DEVNULL,
                                                 stderr=subprocess.DEVNULL)
         elif music_filename.endswith(".midi"):
-            self.log("playing midi file %s" + music_filename)
+            self.log("playing midi file %s", music_filename)
             self.music_process=subprocess.Popen(["timidity", music_filename],
                                                 stdout=subprocess.DEVNULL,
                                                 stderr=subprocess.DEVNULL)
@@ -337,6 +339,7 @@ class NoticeBoardHardware(cmd.Cmd):
 
         if self.music_process is None and self.speech_process is None:
             self.speaker_off_countdown -= 1
+            self.log("countdown to switching speaker off: %d", self.speaker_off_countdown)
             if self.speaker_off_countdown == 0:
                 self.log("switching speaker off")
                 self.do_quiet()
