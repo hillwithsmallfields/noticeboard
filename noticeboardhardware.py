@@ -203,10 +203,9 @@ class NoticeBoardHardware(cmd.Cmd):
         print('(message "Countdown to switching speaker off: %d")' % self.speaker_off_countdown)
         print('(message "Time on server: %s")' % datetime.datetime.now().isoformat())
         if os.isdir(CLIPS_DIR):
-            print('(message "Camera clips: %s")' % (subprocess.run("du", "-si", CLIPS_DIR)
-                                                    .stdout
-                                                    .split(' ')
-                                                    [0]))
+            print('(message "Camera clips: %d bytes")' % int(subprocess.run(["du", "-b", CLIPS_DIR], capture_output=True
+                                                       .stdout
+                                                       .split(b'\t')[0]))
             clips = sorted(n[13:] for n in os.listdir(CLIPS_DIR))
             if clips:
                 print('(message "Most recent camera clip at: %s")' % clips[0][:8])
