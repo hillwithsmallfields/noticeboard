@@ -191,9 +191,12 @@ def main():
                             traceback.print_exception(e)
                     else:
                         data, address = channel.recvfrom(1024)
-                        print("got", str(data), "from", address)
                         if data:
-                            command = data.decode('utf-8')
+                            try:
+                                command = data.decode('utf-8')
+                            except UnicodeDecodeError as dce:
+                                print("Could not decode input from socket:", dce, data)
+                                continue
                             try:
                                 with contextlib.redirect_stdout(io.StringIO()) as captured:
                                     if controller.onecmd(command):
@@ -201,10 +204,12 @@ def main():
                                         watch_on.remove(channel)
                                         channel.shutdown(socket.SHUT_RDWR)
                                 output = captured.getvalue()
+                                print("Captured output", output)
                                 if output:
-                                    channel.sendall(str(output))
+                                    channel.sendall(bytes(output, encoding='utf-8'))
                             except Exception as e:
                                 print("Exception in running command from socket:", e)
+                                traceback.print_tb(e.__traceback__)
                         else: # channel is closed
                             watch_on.remove(channel)
                 today = datetime.date.today()
