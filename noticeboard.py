@@ -46,9 +46,9 @@ config = {
         'Saturday': ["08:00--23:30"],
         'Sunday': ["08:00--23:30"]},
     'chiming_times': {
-        'Default': ("05:30", "22:00"),
-        'Saturday': ("08:30", "22:00"),
-        'Sunday': ("06:00", "22:00"),
+        'Default': "05:30--22:00",
+        'Saturday': "08:30--22:00",
+        'Sunday': "06:00--22:00",
     },
     'camera': {
         'duration': 180,
@@ -67,6 +67,10 @@ def convert_interval(interval_string):
              (int(matched.group(3))*60 + int(matched.group(4))))
             if matched
             else None)
+
+def convert_intervals(intervals):
+    """Convert a dictionary of intervals."""
+    return {k: convert_interval(v) for k, v in intervals.items()}
 
 manual_at_home = False
 manual_away = False
@@ -139,7 +143,7 @@ def main():
     announcer = announce.Announcer(scheduler=scheduler,
                                    announce=lambda contr, message, **kwargs: controller.do_say(message),
                                    playsound=lambda contr, sound, **kwargs: controller.do_play(sound),
-                                   chiming_times=config.get('chiming_times'),
+                                   chiming_times=convert_intervals(config.get('chiming_times')),
                                    chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
 
     for on_action in ['shine', 'photo', 'extend']:
@@ -149,7 +153,7 @@ def main():
 
     previous_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
-                                config['chiming_times'],
+                                convert_intervals(config['chiming_times']),
                                 previous_date)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as incoming:
@@ -206,7 +210,7 @@ def main():
                 today = datetime.date.today()
                 if previous_date != today:
                     announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
-                                                config['chiming_times'],
+                                                convert_intervals(config['chiming_times']),
                                                 today)
                     previous_date = today
                 announcer.tick()
