@@ -198,12 +198,12 @@ def main():
                                 print("Could not decode input from socket:", dce, data)
                                 continue
                             try:
-                                with contextlib.redirect_stdout(io.StringIO()) as captured:
+                                with contextlib.redirect_stdout(io.StringIO()) as captured, contextlib.redirect_stderr(io.StringIO()) as capturederr:
                                     if controller.onecmd(command):
                                         # logout:
                                         watch_on.remove(channel)
                                         channel.shutdown(socket.SHUT_RDWR)
-                                output = captured.getvalue()
+                                output = captured.getvalue() + capturederr.getvalue()
                                 print("Captured output", output)
                                 if output:
                                     channel.sendall(bytes(output, encoding='utf-8'))
