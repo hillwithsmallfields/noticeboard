@@ -3,6 +3,7 @@ from pathlib import Path
 import cmd
 import datetime
 import os
+import re
 import sched
 import shlex
 import subprocess
