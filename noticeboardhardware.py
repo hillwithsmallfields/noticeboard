@@ -173,7 +173,7 @@ class NoticeBoardHardware(cmd.Cmd):
 
     def do_quit(self, arg):
         """Tell the event loop to finish."""
-        close(self.logstream)
+        self.logstream.close()
         self.logstream = None
         return True
 
