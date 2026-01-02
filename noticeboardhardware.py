@@ -99,10 +99,12 @@ class NoticeBoardHardware(cmd.Cmd):
         self.power(False)
 
     def do_speaker(self, arg=None):
+        """Switch the speaker power on."""
         self.sound(True)
         return False
 
     def do_quiet(self, arg=None):
+        """Switch the speaker power off."""
         self.sound(False)
         return False
 
