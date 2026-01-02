@@ -24,6 +24,47 @@ from lamp import Lamp
 
 COUNTDOWN_START = 3
 
+def oggplay(music_filename, begin=None, end=None):
+    subprocess.Popen(["ogg123"]
+                     + (["-k", str(begin)] if begin else [])
+                     + (["-K", str(end)] if end else [])
+                     + [music_filename],
+                     stdout=subprocess.DEVNULL,
+                     stderr=subprocess.DEVNULL)
+
+DEFAULT_MUSIC_DIRECTORY = os.path.expanduser("~/Music")
+
+music_files = {
+}
+
+def get_music_files():
+    if not music_files:
+        def get_music_files_in_dir(directory):
+            for raw in os.listdir(directory):
+                if raw.startswith('.'):
+                    continue
+                name = os.path.join(directory, raw)
+                if os.path.isfile(name) and name.endswith('.ogg'):
+                    base = os.path.splitext(raw)[0].lower().replace('_', ' ')
+                    if (m := re.match("[0-9]+[._-](.+)", base)):
+                        base = m.group(1)
+                    music_files[base] = name
+                elif os.path.isdir(name):
+                    get_music_files_in_dir(name)
+        get_music_files_in_dir(DEFAULT_MUSIC_DIRECTORY)
+
+def filenames_for_music(partial_filename):
+    get_music_files()
+    partial_filename = partial_filename.lower().replace('_', ' ')
+    if partial_filename in music_files:
+        return music_files[partial_filename]
+    else:
+        possibles = set(music_files.keys())
+        for word in partial_filename.split(' '):
+            possibles = {name for name in possibles if word in name}
+        print(possibles)
+        return list(possibles)[0]
+
 class NoticeBoardHardware(cmd.Cmd):
 
     pass
@@ -222,12 +263,7 @@ class NoticeBoardHardware(cmd.Cmd):
         self.sound(True)
         if music_filename.endswith(".ogg"):
             self.log("playing ogg file %s", music_filename)
-            self.music_process=subprocess.Popen(["ogg123"]
-                                                + (["-k", str(begin)] if begin else [])
-                                                + (["-K", str(end)] if end else [])
-                                                + [music_filename],
-                                                stdout=subprocess.DEVNULL,
-                                                stderr=subprocess.DEVNULL)
+            self.music_process=oggplay(music_filename, begin, end)
         elif music_filename.endswith(".ly"):
             self.log("playing lilypond file %s", music_filename)
             midi_file = Path(music_filename).with_suffix(".midi")
@@ -244,7 +280,22 @@ class NoticeBoardHardware(cmd.Cmd):
             self.music_process=subprocess.Popen(["timidity", music_filename],
                                                 stdout=subprocess.DEVNULL,
                                                 stderr=subprocess.DEVNULL)
+        else:
+            music_files = filenames_for_music(music_filename)
+            for music_file in music_files:
+                self.music_process=oggplay(music_file)
+                if self.music_process:
+                    # TODO: non-blocking queuing system
+                    self.log("waiting for old music process to finish when playing multiple tracks consecutively")
+                    self.music_process.wait() # wait for the old one to finish
         return False
+
+    def do_list_tracks(self, arg):
+        """List music tracks."""
+        get_music_files()
+        for track in sorted([track for track in music_files.keys()]):
+            if arg in track:
+                print(track)
 
     def do_photo(self, arg):
         """Capture a photo and store it with a timestamp in the filename."""
