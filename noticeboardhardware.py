@@ -25,6 +25,8 @@ from lamp import Lamp
 
 COUNTDOWN_START = 3
 
+CLIPS_DIR = "/mnt/hdd0/motion/clips"
+
 def oggplay(music_filename, begin=None, end=None):
     subprocess.Popen(["ogg123"]
                      + (["-k", str(begin)] if begin else [])
@@ -189,13 +191,25 @@ class NoticeBoardHardware(cmd.Cmd):
         return False
 
     def do_report(self, arg):
-        """Output the status of the noticeboard hardware."""
+        """Output the status of the noticeboard system."""
         PIR_active = GPIO.input(pins.PIN_PIR)
         keyboard_extended = self.extended()
         keyboard_retracted = self.retracted()
         print('(message "12V power on: %s")' % self.v12_is_on)
         print('(message "PIR: %s")' % PIR_active)
         print('(message "Keyboard status: %s")' % self.keyboard_status)
+        print('(message "Music process: %s")' % self.music_process)
+        print('(message "Speech process: %s")' % self.speech_process)
+        print('(message "Countdown to switching speaker off: %d")' % self.speaker_off_countdown)
+        print('(message "Time on server: %s")' % datetime.datetime.now().isoformat())
+        if os.isdir(CLIPS_DIR):
+            print('(message "Camera clips: %s")' % (subprocess.run("du", "-si", CLIPS_DIR)
+                                                    .stdout
+                                                    .split(' ')
+                                                    [0]))
+            clips = sorted(n[13:] for n in os.listdir(CLIPS_DIR))
+            if clips:
+                print('(message "Most recent camera clip at: %s")' % clips[0][:8])
         return False
 
     def do_at_home(self, arg):
