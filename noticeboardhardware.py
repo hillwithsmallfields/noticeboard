@@ -45,7 +45,7 @@ def get_music_files():
                 if raw.startswith('.'):
                     continue
                 name = os.path.join(directory, raw)
-                if os.path.isfile(name) and name.endswith('.ogg'):
+                if os.path.isfile(name) and name.endswith('.ogg') and 'conflict' not in name:
                     base = os.path.splitext(raw)[0].lower().replace('_', ' ')
                     if (m := re.match("[0-9]+[._-](.+)", base)):
                         base = m.group(1)
