@@ -28,12 +28,12 @@ COUNTDOWN_START = 3
 CLIPS_DIR = "/mnt/hdd0/motion/clips"
 
 def oggplay(music_filename, begin=None, end=None):
-    subprocess.Popen(["ogg123"]
-                     + (["-k", str(begin)] if begin else [])
-                     + (["-K", str(end)] if end else [])
-                     + [music_filename],
-                     stdout=subprocess.DEVNULL,
-                     stderr=subprocess.DEVNULL)
+    return subprocess.Popen(["ogg123"]
+                            + (["-k", str(begin)] if begin else [])
+                            + (["-K", str(end)] if end else [])
+                            + [music_filename],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
 
 DEFAULT_MUSIC_DIRECTORY = os.path.expanduser("~/Music")
 
