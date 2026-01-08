@@ -1,0 +1,15 @@
+cssutils
+frozendict
+inotify
+matplotlib
+numpy
+pandas
+pyowm
+pyyaml
+requests
+coimealta
+dobishem
+expressionive
+orgbookchapterverse
+tabular_page_maker
+timetable_announcer
