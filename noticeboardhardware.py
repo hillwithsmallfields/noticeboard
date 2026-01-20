@@ -65,7 +65,7 @@ def filenames_for_music(partial_filename):
         possibles = set(music_files.keys())
         for word in partial_filename.split(' '):
             possibles = {name for name in possibles if word in name}
-        print(possibles)
+        print("music files matching", partial_filename, "are:", possibles)
         return list(possibles)[0]
 
 class NoticeBoardHardware(cmd.Cmd):
@@ -211,6 +211,15 @@ class NoticeBoardHardware(cmd.Cmd):
                 print('(message "Most recent camera clip at: %s")' % clips[-1].split('.')[0])
         return False
 
+    def do_queue(self, arg):
+        """Show the scheduler queue."""
+        print('(message "Scheduler queue:")')
+        for event in self.scheduler.queue:
+            print('(message "event %s: %s")' % (
+                datetime.datetime.fromtimestamp(event.time).isoformat(),
+                event.argument[1]))
+        print('(message "End of scheduler queue")')
+
     def do_at_home(self, arg):
         """Tell the system I am at home."""
         self.user_status = 'home'
@@ -274,10 +283,11 @@ class NoticeBoardHardware(cmd.Cmd):
         if self.music_process:
             self.log("waiting for old music process to finish")
             self.music_process.wait() # wait for the old one to finish
-        self.sound(True)
         if music_filename.endswith(".ogg"):
             self.log("playing ogg file %s", music_filename)
+            self.sound(True)
             self.music_process=oggplay(music_filename, begin, end)
+            print("started music process %s at %s" % (self.music_process, datetime.datetime.now().isoformat()))
         elif music_filename.endswith(".ly"):
             self.log("playing lilypond file %s", music_filename)
             midi_file = Path(music_filename).with_suffix(".midi")
@@ -286,22 +296,27 @@ class NoticeBoardHardware(cmd.Cmd):
                 subprocess.run(["lilypond", music_filename],
                                stdout=subprocess.DEVNULL,
                                stderr=subprocess.DEVNULL)
+            self.sound(True)
             self.music_process=subprocess.Popen(["timidity", midi_file],
                                                 stdout=subprocess.DEVNULL,
                                                 stderr=subprocess.DEVNULL)
         elif music_filename.endswith(".midi"):
             self.log("playing midi file %s", music_filename)
+            self.sound(True)
             self.music_process=subprocess.Popen(["timidity", music_filename],
                                                 stdout=subprocess.DEVNULL,
                                                 stderr=subprocess.DEVNULL)
         else:
             music_files = filenames_for_music(music_filename)
-            for music_file in music_files:
-                self.music_process=oggplay(music_file)
-                if self.music_process:
-                    # TODO: non-blocking queuing system
-                    self.log("waiting for old music process to finish when playing multiple tracks consecutively")
-                    self.music_process.wait() # wait for the old one to finish
+            if music_files:
+                self.sound(True)
+                print("Playing music files", music_files)
+                for music_file in music_files:
+                    self.music_process=oggplay(music_file)
+                    if self.music_process:
+                        # TODO: non-blocking queuing system
+                        self.log("waiting for old music process to finish when playing multiple tracks consecutively")
+                        self.music_process.wait() # wait for the old one to finish
         return False
 
     def do_list_tracks(self, arg):
@@ -405,22 +420,26 @@ class NoticeBoardHardware(cmd.Cmd):
         """Check for any sound processes having finished.
         If they have all finished, switch the active speaker power off."""
         if self.speech_process and self.speech_process.poll() is not None: # non-None if it has exited
-            self.log("speech process exited")
+            self.log("speech process exited at %s" % datetime.datetime.now().isoformat())
+            print("speech process exited at %s" % datetime.datetime.now().isoformat())
             self.speaker_off_countdown = COUNTDOWN_START
             self.speech_process = None
 
         if self.music_process and self.music_process.poll() is not None: # non-None if it has exited
-            self.log("music process exited")
+            self.log("music process exited at %s" % datetime.datetime.now().isoformat())
+            print("music process exited at %s" % datetime.datetime.now().isoformat())
             self.speaker_off_countdown = COUNTDOWN_START
             self.music_process = None
 
         if self.music_process is None and self.speech_process is None:
             if self.speaker_off_countdown > 0:
                 self.speaker_off_countdown -= 1
-                self.log("countdown to switching speaker off: %d", self.speaker_off_countdown)
+                self.log("countdown to switching speaker off: %d, at %s" % (self.speaker_off_countdown, datetime.datetime.now().isoformat()))
+                print("countdown to switching speaker off: %d at %s" % (self.speaker_off_countdown, datetime.datetime.now().isoformat()))
                 if self.speaker_off_countdown == 0:
-                    self.log("switching speaker off")
-                    self.do_quiet()
+                    self.log("switching speaker off at %s" % datetime.datetime.now().isoformat())
+                    print("switching speaker off at %s" % datetime.datetime.now().isoformat())
+                    self.sound(False)
 
     def step(self, active):
         """Perform one step of any active operations.
@@ -432,10 +451,17 @@ class NoticeBoardHardware(cmd.Cmd):
 
         self.keyboard_step(self.config['delays']['step_max'])
 
+        # something keeps switching the speaker off on the hour while
+        # the chimes are playing, so keep switching it back on:
+        if self.music_process or self.speech_process:
+            self.sound(True)
+
         if not active:
             self.check_for_sounds_finishing()
             self.check_temperature()
             self.check_pir()
 
         return (self.keyboard_status in ('retracting', 'extending')
+                # or self.music_process
+                # or self.speech_process
                 or any(lamp.changing() for lamp in self._lamps))
