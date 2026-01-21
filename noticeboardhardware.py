@@ -18,14 +18,14 @@ import picamera
 import pins
 from lamp import Lamp
 
+import motion
+
 # General support for the noticeboard hardware
 
 # see https://forums.raspberrypi.com/viewtopic.php?t=278003 for driving the lamps
 # see https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20 for the temperature sensor
 
 COUNTDOWN_START = 3
-
-CLIPS_DIR = "/mnt/hdd0/motion/clips"
 
 def oggplay(music_filename, begin=None, end=None):
     return subprocess.Popen(["ogg123"]
@@ -202,15 +202,24 @@ class NoticeBoardHardware(cmd.Cmd):
         print('(message "Speech process: %s")' % self.speech_process)
         print('(message "Countdown to switching speaker off: %d")' % self.speaker_off_countdown)
         print('(message "Time on server: %s")' % datetime.datetime.now().isoformat())
-        if os.path.isdir(CLIPS_DIR):
-            print('(message "Camera clips: %d bytes")' % int(subprocess.run(["du", "-b", CLIPS_DIR], capture_output=True)
+        clips_dir = motion.get_clips_dir()
+        if os.path.isdir(clips_dir):
+            print('(message "Camera clips: %d bytes")' % int(subprocess.run(["du", "-b", clips_dir], capture_output=True)
                                                              .stdout
                                                              .split(b'\t')[0]))
-            clips = sorted(n[13:] for n in os.listdir(CLIPS_DIR))
+            clips = sorted(n[13:] for n in os.listdir(clips_dir))
             if clips:
                 print('(message "Most recent camera clip at: %s")' % clips[-1].split('.')[0])
         return False
 
+    def do_trim(self, arg):
+        """Trim the camera clips directory."""
+        motion.trim_dir(arg)
+
+    def do_keep(self, arg):
+        """Keep only a given number of days of camera clips."""
+        motion.keep_days_in_dir(int(arg))
+    
     def do_queue(self, arg):
         """Show the scheduler queue."""
         print('(message "Scheduler queue:")')
