@@ -57,7 +57,7 @@ config = {
     'motion': {
         'retain': "8Gb",
         'days': 31,
-    }
+    },
     'pir_log_file': "/var/log/pir",
     'port': 10101
 }
