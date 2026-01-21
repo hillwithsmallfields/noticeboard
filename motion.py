@@ -81,18 +81,23 @@ def get_files_details(clip_dir):
     """Return the details of all the regular files in a directory."""
     return [file_details(s) for s in full_filenames(clip_dir)]
 
-def keep_days_in_dir(clip_dir, keep_days):
+def keep_days_in_dir(clips_dir, keep_days):
     """Keep only a given number of days back in a clips directory."""
     cutoff = time.time() - keep_days*24*60*60
     deleted = 0
     kept = 0
+    failed = 0
     for name in full_filenames(clips_dir):
-        if os.stat(name).st_ctime) < cutoff:
-            os.delete(name)
-            deleted += 1
+        if os.stat(name).st_mtime < cutoff:
+            try:
+                os.remove(name)
+                deleted += 1
+            except Exception as e:
+                failed += 1
         else:
             kept += 1
     return {'deleted': deleted,
+            'failed_to_delete': failed,
             'kept': kept}
 
 def trim_dir(clips_dir, trim_to):
@@ -108,7 +113,7 @@ def trim_dir(clips_dir, trim_to):
                                [0])
                 > limit)):
         try:
-            os.delete(filenames.pop())
+            os.remove(filenames.pop())
         except:
             pass
 
@@ -120,10 +125,15 @@ def motion_main(list_files, keep_days, wipeout, trim):
                   sys.stdout)
     if wipeout:
         deleted = 0
+        failed = 0
         for filename in full_filenames(clips_dir):
-            os.delete(filename)
-            deleted += 1
-        json.dump({'deleted': deleted}, sys.stdout)
+            try:
+                os.remove(filename)
+                deleted += 1
+            except:
+                failed += 1
+        json.dump({'deleted': deleted,
+                   'failed_to_delete': failed}, sys.stdout)
     if keep_days:
         json.dump(keep_days_in_dir(clips_dir, keep_days),
                   sys.stdout)
