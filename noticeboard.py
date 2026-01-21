@@ -19,6 +19,7 @@ import yaml
 
 from timetable_announcer import announce
 from noticeboardhardware import NoticeBoardHardware
+import motion
 
 # This is overwritten from /etc/noticeboard.conf if it's available
 config = {
@@ -53,6 +54,10 @@ config = {
     'camera': {
         'duration': 180,
         'directory': "/var/spool/camera"},
+    'motion': {
+        'retain': "8Gb",
+        'days': 31,
+    }
     'pir_log_file': "/var/log/pir",
     'port': 10101
 }
@@ -217,6 +222,8 @@ def main():
                     announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
                                                 convert_intervals(config['chiming_times']),
                                                 today)
+                    motion.trim_dir(config['motion']['retain'])
+                    motion.keep_days_in_dir(config['motion']['days'])
                     previous_date = today
                 announcer.tick()
 
