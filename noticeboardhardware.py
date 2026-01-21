@@ -287,7 +287,6 @@ class NoticeBoardHardware(cmd.Cmd):
             self.log("playing ogg file %s", music_filename)
             self.sound(True)
             self.music_process=oggplay(music_filename, begin, end)
-            print("started music process %s at %s" % (self.music_process, datetime.datetime.now().isoformat()))
         elif music_filename.endswith(".ly"):
             self.log("playing lilypond file %s", music_filename)
             midi_file = Path(music_filename).with_suffix(".midi")
@@ -421,13 +420,11 @@ class NoticeBoardHardware(cmd.Cmd):
         If they have all finished, switch the active speaker power off."""
         if self.speech_process and self.speech_process.poll() is not None: # non-None if it has exited
             self.log("speech process exited at %s" % datetime.datetime.now().isoformat())
-            print("speech process exited at %s" % datetime.datetime.now().isoformat())
             self.speaker_off_countdown = COUNTDOWN_START
             self.speech_process = None
 
         if self.music_process and self.music_process.poll() is not None: # non-None if it has exited
             self.log("music process exited at %s" % datetime.datetime.now().isoformat())
-            print("music process exited at %s" % datetime.datetime.now().isoformat())
             self.speaker_off_countdown = COUNTDOWN_START
             self.music_process = None
 
@@ -435,10 +432,8 @@ class NoticeBoardHardware(cmd.Cmd):
             if self.speaker_off_countdown > 0:
                 self.speaker_off_countdown -= 1
                 self.log("countdown to switching speaker off: %d, at %s" % (self.speaker_off_countdown, datetime.datetime.now().isoformat()))
-                print("countdown to switching speaker off: %d at %s" % (self.speaker_off_countdown, datetime.datetime.now().isoformat()))
                 if self.speaker_off_countdown == 0:
                     self.log("switching speaker off at %s" % datetime.datetime.now().isoformat())
-                    print("switching speaker off at %s" % datetime.datetime.now().isoformat())
                     self.sound(False)
 
     def step(self, active):
