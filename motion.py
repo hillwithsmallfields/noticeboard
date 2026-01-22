@@ -106,7 +106,7 @@ def keep_days_in_dir(keep_days=7, clips_dir=None):
 
 def trim_dir(trim_to="4Gb", clips_dir=None):
     """Trim a clips directory to a given size."""
-    limit = prefixed.Float(trim_to)
+    limit = prefixed.Float(trim_to.removesuffix("b"))
     if clips_dir is None:
         clips_dir = get_clips_dir()
     filenames = sorted(full_filenames(clips_dir),
