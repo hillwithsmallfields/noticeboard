@@ -59,7 +59,7 @@ def get_config_value(filename, key):
 
 def get_clips_dir():
     """Get the clips directory in current use."""
-    return motion.get_config_value(motion.get_motion_config_filename(), "target_dir")
+    return get_config_value(get_motion_config_filename(), "target_dir")
 
 def run_on_host(hostname, command):
     """Run a command on a specified host."""
