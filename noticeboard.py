@@ -19,6 +19,7 @@ import yaml
 
 from timetable_announcer import announce
 from noticeboardhardware import NoticeBoardHardware
+import archive
 import managed_directory
 import motion
 
@@ -59,6 +60,9 @@ config = {
         'retain': "8Gb",
         'days': 31,
     },
+    'org_directory': "$HOME/Sync/org",
+    'archive_directory': "$HOME/Sync-snapshots",
+    'archives_size': 8 * 1024 * 1024 * 1024,
     'pir_log_file': "/var/log/pir",
     'port': 10101
 }
@@ -128,6 +132,17 @@ def read_config_file(config, config_file_name):
     if os.path.isfile(config_file_name):
         with open(os.path.expanduser(os.path.expandvars(config_file_name))) as config_file:
             rec_update(config, yaml.safe_load(config_file))
+
+def nightly_chores(config):
+    """Do some nightly tasks."""
+    clips_directory = motion.get_clips_directory()
+    archive.archive(config['org_directory'],
+                    config['archive_directory'],
+                    config['archives_size'])
+    managed_directory.trim_directory(clips_directory,
+                                     config['motion']['retain'])
+    managed_directory.keep_days_in_directory(clips_directory,
+                                             config['motion']['days'])
 
 def main():
     """Interface to the hardware of my noticeboard.
@@ -223,9 +238,7 @@ def main():
                     announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
                                                 convert_intervals(config['chiming_times']),
                                                 today)
-                    clips_directory = motion.get_clips_directory()
-                    managed_directory.trim_directory(clips_directory, config['motion']['retain'])
-                    managed_directory.keep_days_in_directory(clips_directory, config['motion']['days'])
+                    nightly_chores(config)
                     previous_date = today
                 announcer.tick()
 
