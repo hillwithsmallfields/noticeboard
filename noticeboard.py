@@ -222,7 +222,7 @@ def main():
                     announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
                                                 convert_intervals(config['chiming_times']),
                                                 today)
-                    motion.trim_dir(config['motion']['retain'])
+                    motion.trim_dir(motion.get_clips_dir(), config['motion']['retain'])
                     motion.keep_days_in_dir(config['motion']['days'])
                     previous_date = today
                 announcer.tick()

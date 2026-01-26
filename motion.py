@@ -81,9 +81,9 @@ def full_filenames(directory):
                         for r in os.listdir(directory))
             if os.path.isfile(s)]
 
-def get_files_details(clip_dir):
+def get_files_details(directory):
     """Return the details of all the regular files in a directory."""
-    return [file_details(s) for s in full_filenames(clip_dir)]
+    return [file_details(s) for s in full_filenames(directory)]
 
 def keep_days_in_dir(keep_days=7, clips_dir=None):
     """Keep only a given number of days back in a clips directory."""
@@ -104,24 +104,26 @@ def keep_days_in_dir(keep_days=7, clips_dir=None):
             'failed_to_delete': failed,
             'kept': kept}
 
-def trim_dir(trim_to="4Gb", clips_dir=None):
+def directory_size(directory):
+    return (prefixed.Float(subprocess.run(["du", "-s", directory],
+                                          capture_output=True,
+                                          encoding='utf8')
+                           .stdout
+                           .split('\t')
+                           [0]))
+
+def trim_dir(directory, trim_to="4Gb"):
     """Trim a clips directory to a given size."""
     limit = prefixed.Float(trim_to.removesuffix("b"))
-    if clips_dir is None:
-        clips_dir = get_clips_dir()
-    filenames = sorted(full_filenames(clips_dir),
+    filenames = sorted(full_filenames(directory),
                        key=lambda filename: os.stat(filename).st_ctime,
                        reverse=True)
-    while (filenames
-           and (prefixed.Float(subprocess.run("du", "-si", clips_dir)
-                               .stdout
-                               .split(' ')
-                               [0])
-                > limit)):
+    while (filenames and (directory_size(directory) > limit)):
         try:
-            os.remove(filenames.pop())
+            filename = filenames.pop()
+            os.remove(filename)
         except:
-            pass
+            print("Could not delete", filename, "while trimming directory", directory, "to", trim_to)
 
 def motion_main(list_files, keep_days, wipeout, trim):
     clips_dir = get_config_value(get_motion_config_filename(),

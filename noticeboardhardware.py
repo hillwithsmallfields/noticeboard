@@ -214,12 +214,14 @@ class NoticeBoardHardware(cmd.Cmd):
 
     def do_trim(self, arg):
         """Trim the camera clips directory."""
+        if not arg:
+            arg = motion.get_clips_dir()
         motion.trim_dir(arg)
 
     def do_keep(self, arg):
         """Keep only a given number of days of camera clips."""
         motion.keep_days_in_dir(int(arg))
-    
+
     def do_queue(self, arg):
         """Show the scheduler queue."""
         print('(message "Scheduler queue:")')

@@ -1,28 +1,35 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
-import argparse
+import subprocess
+import prefixed
 
-import RPi.GPIO as GPIO
-import time
+def directory_size(directory):
+    raw = (subprocess.run(["du", "-s", directory],
+                          capture_output=True,
+                          encoding='utf8').stdout.split('\t')[0])
+    print("raw value is", raw)
+    return (prefixed.Float(raw))
 
-PIN = 12
+a = (subprocess.run(["du", "-s", "."],
+                   capture_output=True,
+                   encoding='utf8')
+     .stdout)
 
-def main():
-    parser = argparse.ArgumentParser()
-    args = parser.parse_args()
+print(a)
 
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(PIN, GPIO.OUT)
-    pwm = GPIO.PWM(PIN, 1000)
-    pwm.start(0)
-    for i in range(30):
-        brightness = 0
-        for up in (True, False):
-            for step in range(100):
-                brightness += 1 if up else -1
-                pwm.ChangeDutyCycle(brightness)
-                time.sleep(0.01)
-    pwm.stop()
+b = a.split()
+
+print(b)
+
+c = b[0]
+
+print(c)
+
+d = prefixed.Float(c)
+
+print(d)
+
+print(directory_size("."))
 
 if __name__ == '__main__':
     main()
