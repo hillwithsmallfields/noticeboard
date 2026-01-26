@@ -18,6 +18,7 @@ import picamera
 import pins
 from lamp import Lamp
 
+import managed_directory
 import motion
 
 # General support for the noticeboard hardware
@@ -26,6 +27,7 @@ import motion
 # see https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20 for the temperature sensor
 
 COUNTDOWN_START = 3
+DIRECTORY_MAX_SIZE = 8 * 1024 * 1024 * 1024
 
 def oggplay(music_filename, begin=None, end=None):
     return subprocess.Popen(["ogg123"]
@@ -202,7 +204,7 @@ class NoticeBoardHardware(cmd.Cmd):
         print('(message "Speech process: %s")' % self.speech_process)
         print('(message "Countdown to switching speaker off: %d")' % self.speaker_off_countdown)
         print('(message "Time on server: %s")' % datetime.datetime.now().isoformat())
-        clips_dir = motion.get_clips_dir()
+        clips_dir = motion.get_clips_directory()
         if os.path.isdir(clips_dir):
             print('(message "Camera clips: %d bytes")' % int(subprocess.run(["du", "-b", clips_dir], capture_output=True)
                                                              .stdout
@@ -214,13 +216,11 @@ class NoticeBoardHardware(cmd.Cmd):
 
     def do_trim(self, arg):
         """Trim the camera clips directory."""
-        if not arg:
-            arg = motion.get_clips_dir()
-        motion.trim_dir(arg)
+        managed_directory.trim_directory(motion.get_clips_directory(), int(arg) if arg else DIRECTORY_MAX_SIZE)
 
     def do_keep(self, arg):
         """Keep only a given number of days of camera clips."""
-        motion.keep_days_in_dir(int(arg))
+        managed_directory.keep_days_in_directory(motion.get_clips_directory(), int(arg) if arg else DIRECTORY_MAX_SIZE)
 
     def do_queue(self, arg):
         """Show the scheduler queue."""

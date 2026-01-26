@@ -4,13 +4,14 @@ import argparse
 import datetime
 import json
 import os
-import prefixed
 import psutil
 import re
 import socket
 import sys
 import subprocess
 import time
+
+import managed_directory
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -57,7 +58,7 @@ def get_config_value(filename, key):
                     return parts[1]
     return None
 
-def get_clips_dir():
+def get_clips_directory():
     """Get the clips directory in current use."""
     return get_config_value(get_motion_config_filename(), "target_dir")
 
@@ -68,73 +69,15 @@ def run_on_host(hostname, command):
     else:
         return subprocess.run(["ssh", hostname, command]).stdout
 
-def file_details(filename):
-    """Return some details of a file as a dictionary."""
-    stat = os.stat(filename)
-    return {'filename': filename,
-            'size': stat.st_size,
-            'created': datetime.datetime.fromtimestamp(stat.st_mtime).isoformat()}
-
-def full_filenames(directory):
-    """Return the full names of all the regular files in a directory."""
-    return [s for s in (os.path.join(directory, r)
-                        for r in os.listdir(directory))
-            if os.path.isfile(s)]
-
-def get_files_details(directory):
-    """Return the details of all the regular files in a directory."""
-    return [file_details(s) for s in full_filenames(directory)]
-
-def keep_days_in_dir(keep_days=7, clips_dir=None):
-    """Keep only a given number of days back in a clips directory."""
-    cutoff = time.time() - keep_days*24*60*60
-    deleted = 0
-    kept = 0
-    failed = 0
-    for name in full_filenames(clips_dir or get_clips_dir()):
-        if os.stat(name).st_mtime < cutoff:
-            try:
-                os.remove(name)
-                deleted += 1
-            except Exception as e:
-                failed += 1
-        else:
-            kept += 1
-    return {'deleted': deleted,
-            'failed_to_delete': failed,
-            'kept': kept}
-
-def directory_size(directory):
-    return (prefixed.Float(subprocess.run(["du", "-s", directory],
-                                          capture_output=True,
-                                          encoding='utf8')
-                           .stdout
-                           .split('\t')
-                           [0]))
-
-def trim_dir(directory, trim_to="4Gb"):
-    """Trim a clips directory to a given size."""
-    limit = prefixed.Float(trim_to.removesuffix("b"))
-    filenames = sorted(full_filenames(directory),
-                       key=lambda filename: os.stat(filename).st_ctime,
-                       reverse=True)
-    while (filenames and (directory_size(directory) > limit)):
-        try:
-            filename = filenames.pop()
-            os.remove(filename)
-        except:
-            print("Could not delete", filename, "while trimming directory", directory, "to", trim_to)
-
 def motion_main(list_files, keep_days, wipeout, trim):
-    clips_dir = get_config_value(get_motion_config_filename(),
-                                 "target_dir")
+    clips_dir = get_clips_directory ()
     if list:
-        json.dump(get_files_details(clips_dir),
+        json.dump(managed_directory.get_files_details(clips_dir),
                   sys.stdout)
     if wipeout:
         deleted = 0
         failed = 0
-        for filename in full_filenames(clips_dir):
+        for filename in managed_directory.full_filenames(clips_dir):
             try:
                 os.remove(filename)
                 deleted += 1
@@ -143,10 +86,10 @@ def motion_main(list_files, keep_days, wipeout, trim):
         json.dump({'deleted': deleted,
                    'failed_to_delete': failed}, sys.stdout)
     if keep_days:
-        json.dump(keep_days_in_dir(keep_days, clips_dir),
+        json.dump(managed_directory.keep_days_in_directory(clips_dir, keep_days),
                   sys.stdout)
     if trim:
-        trim(trim, clips_dir)
+        managed_directory.trim_directory(clips_dir, trim)
 
 if __name__ == "__main__":
     motion_main(**get_args())
