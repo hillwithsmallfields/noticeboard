@@ -13,7 +13,7 @@ def archive(directory,
     archive_filename = os.path.join(archive_directory,
                                      (os.path.basename(directory)
                                       + "-"
-                                      + (datetime.datetime.now(timespec='seconds')
+                                      + (datetime.datetime.now().isoformat(timespec='seconds')
                                          .replace(':', '-')
                                          .replace('T', '-'))
                                       + ".tgz"))
