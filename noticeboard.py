@@ -62,7 +62,7 @@ config = {
     },
     'org_directory': "$HOME/Sync/org",
     'archive_directory': "$HOME/Sync-snapshots",
-    'archives_size': 8 * 1024 * 1024 * 1024,
+    'archives_size' "8Gb",
     'pir_log_file': "/var/log/pir",
     'port': 10101
 }
