@@ -8,15 +8,45 @@ import subprocess
 import time
 
 from lifehacking_config import config
+import managed_directory
 
 DVD_FULL = 4700000000
 
 def make_tarball(tarball, of_directory):
     if not os.path.isfile(tarball):
-        os.system("tar cz -C %s %s > %s" % (os.path.dirname(of_directory),
-                                            os.path.basename(of_directory),
-                                            tarball))
+        subprocess.run(["tar", "--create", "--gzip",
+                        "--dereference",
+                        "--directory", os.path.dirname(of_directory),
+                        "--file", tarball,
+                        os.path.basename(of_directory),
+                        ])
 
+def archive_and_trim_archives(directory,
+                              template,
+                              archives,
+                              archives_size):
+    archive_directory = os.path.expandvars(archives)
+    archive_filename = os.path.join(archive_directory,
+                                    template % (datetime.date.today().isoformat()))
+    print("archive filename is", archive_filename, "and archive directory is", archive_directory, "and directory being archived is", directory)
+    make_tarball(archive_filename, os.path.expandvars(directory))
+    managed_directory.trim_directory(archive_directory,
+                                     archives_size)
+
+def nightly_archive():
+    archive_and_trim_archives(
+        config('general', 'org-directory'),
+        config('archive', 'daily-backup-template'),
+        config('archive', 'org-archive-directory'),
+        config('archive', 'org-archives-size'))
+
+def weekly_archive():
+    archive_and_trim_archives(
+        config('general', 'sync-directory'),
+        config('archive', 'weekly-backup-template'),
+        config('archive', 'sync-archive-directory'),
+        config('archive', 'sync-archives-size'))
+    
 def write_iso_to_dvd(iso):
     """Write a DVD image to the drive if there's a blank disk in it."""
     if os.path.exists("/dev/dvdrw"):
@@ -109,15 +139,7 @@ def backup_to_dvd(synced_snapshots,
 
 def backup_and_archive(force=False):
     """Take backups, and make an archive, if today is one of the specified days."""
-    synced_snapshots = config('backups', 'synced-snapshots')
-    if synced_snapshots == "" or synced_snapshots.startswith("$"):
-        synced_snapshots = os.path.expandvars("$HOME/Sync-snapshots")
-    daily_backup_template = config('backups', 'daily-backup-template')
-    weekly_backup_template = config('backups', 'weekly-backup-template')
-    today = datetime.date.today()
-    synced = os.path.expandvars("$SYNCED")
-    make_tarball(os.path.join(synced_snapshots, daily_backup_template % today.isoformat()),
-                 os.path.join(synced, "org"))
+    nightly_archive()
     weekly_backup_day = config('backups', 'weekly-backup-day')
     if not isinstance(weekly_backup_day, int):
         try:
@@ -125,8 +147,7 @@ def backup_and_archive(force=False):
         except ValueError:
             weekly_backup_day = time.strptime(weekly_backup_day, "%a").tm_wday
     if force or today.weekday() == weekly_backup_day:
-        make_tarball(os.path.join(synced_snapshots, weekly_backup_template % today.isoformat()),
-                     synced)
+        weekly_archive()
     if force or today.day == int(config('backups', 'monthly-backup-day')):
         if 'ISOS' not in os.environ:
             os.environ['ISOS'] = os.path.expandvars("$HOME/isos")

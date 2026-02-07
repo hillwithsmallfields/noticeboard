@@ -39,14 +39,14 @@ HARDCODED_DEFAULT_CONFIG = {
     'finance': {
         'accounts-config': "accounts.yaml",
         'accumulated-bank-statements-file': "$SYNCED/finances/handelsbanken/handelsbanken-full.csv",
-        'bank-statement-template': "~/Downloads/Transaction*.csv",
+        'bank-statement-template': "$HOME/Downloads/Transaction*.csv",
         'budgeting-classes-file': "budgetting-classes.yaml",
-        'configdir': "~/open-projects/github.com/hillwithsmallfields/qs/conf",
+        'configdir': "$HOME/open-projects/github.com/hillwithsmallfields/qs/conf",
         'conversions-config': "conversions.yaml",
         'conversions-dir': "$SYNCED/finances",
         'finances-completions': "$SYNCED/var/finances-completions.el",
         'main-account': "$SYNCED/finances/finances.csv",
-        'merge-results-dir': "~/scratch/auto-merge-results",
+        'merge-results-dir': "$HOME/scratch/auto-merge-results",
         'merge-results-file': "merged-with-unmatched-all.csv",
         'thresholds-file': "budgetting-thresholds.yaml"},
 
@@ -60,10 +60,10 @@ HARDCODED_DEFAULT_CONFIG = {
     'physical': {
         'running-filename': "$SYNCED/health/garmin-running.csv",
         'cycling-filename': "$SYNCED/health/garmin-cycling.csv",
-        'garmin-incoming-pattern': "~/Downloads/Activities*.csv",
+        'garmin-incoming-pattern': "$HOME/Downloads/Activities*.csv",
         'mfp-filename': "$SYNCED/health/mfp-accum.csv",
         'omron-filename': "$SYNCED/health/blood-pressure.csv",
-        'omron-incoming-pattern': "~/Downloads/*BP-Logbook*.csv",
+        'omron-incoming-pattern': "$HOME/Downloads/*BP-Logbook*.csv",
         'oura-filename': "$SYNCED/health/sleep.csv",
         'physical-filename': "$SYNCED/health/physical.csv",
         'weight-filename': "$SYNCED/health/weight.csv",
@@ -71,7 +71,7 @@ HARDCODED_DEFAULT_CONFIG = {
 
     'start-page': {
         'start-page-generator': 'make_link_table.py',
-        'startpage': "~/private_html/startpage.html",
+        'startpage': "$HOME/private_html/startpage.html",
         'startpage-source': "$SYNCED/org/startpage.yaml",
         'startpage-style': "$SYNCED/org/startpage.css"},
 
@@ -86,13 +86,33 @@ HARDCODED_DEFAULT_CONFIG = {
         'weather-filename': "$SYNCED/var/weather.csv"},
 
     'general': {
-        'archive': "~/archive",
-        'charts': "~/private_html/dashboard",
+        'org-directory': "$ORG",
+        'sync-directory': "$SYNCED",
+        'charts': "$HOME/private_html/dashboard",
         'default-timetable': "timetable.csv",
-        'projects-dir': "~/open-projects/github.com",
+        'projects-dir': "$HOME/open-projects/github.com",
         'projects-user': "hillwithsmallfields",
         'reflections-dir': os.path.expandvars("$SYNCED/texts/reflection"),
         'timetables-dir': "$SYNCED/timetables"},
+
+    'archive': {
+        'org-archive-directory': "$HOME/org-snapshots",
+        'org-archives-size': "8Gb",
+        'sync-archive-directory': "$HOME/Sync-snapshots",
+        'sync-archives-size': "32Gb",
+        'archive': "$ARCHIVE",
+        'backup-iso-format': "backup-%s.iso",
+        'backup-isos-directory': "$ISOS/backups",
+        'write-iso-to-dvd': True,
+        'synced-snapshots': "$SYNCEDSNAPSHOTS",
+        'daily-backup-template': "org-%s.tgz",
+        'gpg-recipient': "jcg.sturdy@gmail.com",
+        'projects-dir': "$HOME/open-projects/github.com",
+        'projects-user': "hillwithsmallfields",
+        'monthly-backup-day': 1,
+        'weekly-backup-day': "Wednesday",
+        'weekly-backup-template': "Sync-%s.tgz"
+    },
 
     'house': {
         'expected_occupancy': {
@@ -115,10 +135,6 @@ HARDCODED_DEFAULT_CONFIG = {
         'retain': "8Gb",
         'days': 31,
     },
-
-    'org_directory': "$HOME/Sync/org",
-    'archive_directory': "$HOME/Sync-snapshots",
-    'archives_size': "8Gb",
 
     'noticeboard': {
         'chiming_times': {

@@ -71,19 +71,6 @@ def handle_possible_intruder():
         logfile.write(datetime.datetime.now().isoformat() + "\n")
     # todo: send a remote notification e.g. email with the picture
 
-def nightly_chores():
-    """Do some nightly tasks."""
-    archive.archive(config('org_directory'),
-                    config('archive_directory'),
-                    config('archives_size'))
-    clips_directory = motion.get_clips_directory()
-    removed = managed_directory.trim_directory(clips_directory,
-                                               config('motion', 'retain'))
-    keeping = managed_directory.keep_days_in_directory(clips_directory,
-                                                       config('motion', 'days'))
-    print('(message "Removed %d files to keep clips directory down to %s and %d because older than %d days")'
-          % (len(removed), config('motion', 'retain'), keeping['deleted'], config('motion', 'days')))
-
 def main():
     """Interface to the hardware of my noticeboard.
     This is meant for my noticeboard Emacs software to send commands to."""
@@ -176,7 +163,6 @@ def main():
                     announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
                                                 convert_intervals(config('noticeboard', 'chiming_times')),
                                                 today)
-                    nightly_chores()
                     previous_date = today
                 announcer.tick()
 

@@ -1,4 +1,4 @@
-finance:
+xfinance:
         accounts-config: accounts.yaml
         main-account-number: 81072106
         accumulated-bank-statements-file: $SYNCED/finances/handelsbanken/handelsbanken-full.csv
@@ -52,7 +52,7 @@ weather:
         sunlight-times-file: $SYNCED/var/sunlight-times.json
         weather-country: GB
         weather-city: Cambridge
-backups:
+archive:
         archive: $ARCHIVE
         backup-iso-format: backup-%s.iso
         backup-isos-directory: $ISOS/backups
@@ -60,7 +60,7 @@ backups:
         synced-snapshots: $SYNCEDSNAPSHOTS
         daily-backup-template: org-%s.tgz
         gpg-recipient: jcg.sturdy@gmail.com
-        projects-dir: ~/open-projects/github.com
+        projects-dir: $HOME/open-projects/github.com
         projects-user: hillwithsmallfields
         monthly-backup-day: 1
         weekly-backup-day: Wednesday
@@ -73,6 +73,8 @@ general:
         projects-dir: ~/open-projects/github.com
         projects-user: hillwithsmallfields
         reflections-dir: $SYNCED/texts/reflection
+        org-directory: $ORG
+        sync-directory: $SYNCED
 noticeboard:
         chiming_times:
                 Default: 06:30--22:00
