@@ -58,9 +58,12 @@ def trim_directory(directory, trim_to="4Gb"):
     filenames = sorted(full_filenames(directory),
                        key=lambda filename: os.stat(filename).st_ctime,
                        reverse=True)
+    removed = []
     while (filenames and (directory_size(directory) > limit)):
         try:
             filename = filenames.pop()
             os.remove(filename)
+            removed.append(filename)
         except:
             print("Could not delete", filename, "while trimming directory", directory, "to", trim_to)
+    return removed

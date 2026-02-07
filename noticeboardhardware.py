@@ -18,6 +18,7 @@ import picamera
 import pins
 from lamp import Lamp
 
+from lifehacking_config import config
 import managed_directory
 import motion
 
@@ -75,11 +76,9 @@ class NoticeBoardHardware(cmd.Cmd):
     pass
 
     def __init__(self,
-                 config,
                  scheduler,
                  expected_at_home_times,
                  speech_engine="espeak"):
-        self.config = config
         self.scheduler = scheduler or sched.scheduler(time.time, time.sleep)
         self.expected_at_home_times = expected_at_home_times
         self.speech_engine = speech_engine
@@ -338,7 +337,7 @@ class NoticeBoardHardware(cmd.Cmd):
 
     def do_photo(self, arg):
         """Capture a photo and store it with a timestamp in the filename."""
-        image_filename = os.path.join(self.config['camera']['directory'],
+        image_filename = os.path.join(config('camera', 'directory'),
                                       datetime.datetime.now().isoformat()+".jpg")
         print('(message "taking photo into %s")' % image_filename)
         self.camera.capture(image_filename)
@@ -455,7 +454,7 @@ class NoticeBoardHardware(cmd.Cmd):
         for lamp in self._lamps:
             lamp.step()
 
-        self.keyboard_step(self.config['delays']['step_max'])
+        self.keyboard_step(config('noticeboard', 'delays', 'step_max'))
 
         # something keeps switching the speaker off on the hour while
         # the chimes are playing, so keep switching it back on:

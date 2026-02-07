@@ -15,57 +15,13 @@ import socket
 import sys
 import time
 import traceback
-import yaml
 
 from timetable_announcer import announce
 from noticeboardhardware import NoticeBoardHardware
+from lifehacking_config import config, update_config
 import archive
 import managed_directory
 import motion
-
-# This is overwritten from /etc/noticeboard.conf if it's available
-config = {
-    'delays': {
-        'fast': 0.01,
-        'slow': 1.0,
-        'shine': 2,
-        'quench': 10,
-        'photo': 3,
-        'extend': 4,
-        'retract': 15,
-        'step_max': 200},
-    'expected_occupancy': {
-        # default for a 9-5 worker who stays in at weekends
-        'Monday': ["06:00--08:30",
-                   "17:30--23:30"],
-        'Tuesday': ["06:00--08:30",
-                    "17:30--23:30"],
-        'Wednesday': ["06:00--08:30",
-                      "17:30--23:30"],
-        'Thursday': ["06:00--08:30",
-                     "17:30--23:30"],
-        'Friday': ["06:00--08:30",
-                   "17:30--23:30"],
-        'Saturday': ["08:00--23:30"],
-        'Sunday': ["08:00--23:30"]},
-    'chiming_times': {
-        'Default': "05:30--22:00",
-        'Saturday': "08:30--22:00",
-        'Sunday': "06:00--22:00",
-    },
-    'camera': {
-        'duration': 180,
-        'directory': "/var/spool/camera"},
-    'motion': {
-        'retain': "8Gb",
-        'days': 31,
-    },
-    'org_directory': "$HOME/Sync/org",
-    'archive_directory': "$HOME/Sync-snapshots",
-    'archives_size': "8Gb",
-    'pir_log_file': "/var/log/pir",
-    'port': 10101
-}
 
 camera = None
 
@@ -111,75 +67,57 @@ def handle_possible_intruder():
     global photographing
     when = datetime.datetime.now()
     photographing = when + photographing_duration
-    with open(config['pir_log_file'], 'w+') as logfile:
+    with open(config('noticeboard', 'pir_log_file'), 'w+') as logfile:
         logfile.write(datetime.datetime.now().isoformat() + "\n")
     # todo: send a remote notification e.g. email with the picture
 
-# based on https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
-def rec_update(d, u, i=""):
-    for k, v in u.items():
-        if isinstance(v, dict):
-            d[k] = rec_update(d.get(k, {}), v, "  ")
-        elif isinstance(v, list):
-            d[k] = d.get(k, []) + [(ve if ve != 'None' else None) for ve in v]
-        elif v == 'None':
-            d[k] = None
-        else:
-            d[k] = v
-    return d
-
-def read_config_file(config, config_file_name):
-    if os.path.isfile(config_file_name):
-        with open(os.path.expanduser(os.path.expandvars(config_file_name))) as config_file:
-            rec_update(config, yaml.safe_load(config_file))
-
-def nightly_chores(config):
+def nightly_chores():
     """Do some nightly tasks."""
+    archive.archive(config('org_directory'),
+                    config('archive_directory'),
+                    config('archives_size'))
     clips_directory = motion.get_clips_directory()
-    archive.archive(config['org_directory'],
-                    config['archive_directory'],
-                    config['archives_size'])
-    managed_directory.trim_directory(clips_directory,
-                                     config['motion']['retain'])
-    managed_directory.keep_days_in_directory(clips_directory,
-                                             config['motion']['days'])
+    removed = managed_directory.trim_directory(clips_directory,
+                                               config('motion', 'retain'))
+    keeping = managed_directory.keep_days_in_directory(clips_directory,
+                                                       config('motion', 'days'))
+    print('(message "Removed %d files to keep clips directory down to %s and %d because older than %d days")'
+          % (len(removed), config('motion', 'retain'), keeping['deleted'], config('motion', 'days')))
 
 def main():
     """Interface to the hardware of my noticeboard.
     This is meant for my noticeboard Emacs software to send commands to."""
-    read_config_file(config, "/etc/noticeboard.conf")
     global expected_at_home_times
     expected_at_home_times = {day: [convert_interval(interval_string)
                                     for interval_string in interval_string_list]
-                              for day, interval_string_list in config['expected_occupancy'].items()}
+                              for day, interval_string_list in config('house', 'expected_occupancy').items()}
     print('(message "noticeboard hardware controller starting")')
     global photographing
     global photographing_duration
-    photographing_duration = datetime.timedelta(0, config['camera']['duration'])
+    photographing_duration = datetime.timedelta(0, config('noticeboard', 'camera', 'duration'))
 
     scheduler = sched.scheduler(time.time, time.sleep)
-    controller = NoticeBoardHardware(config=config,
-                                     scheduler=scheduler,
+    controller = NoticeBoardHardware(scheduler=scheduler,
                                      expected_at_home_times=expected_at_home_times)
     announcer = announce.Announcer(scheduler=scheduler,
                                    announce=lambda contr, message, **kwargs: controller.do_say(message),
                                    playsound=lambda contr, sound, **kwargs: controller.do_play(sound),
-                                   chiming_times=convert_intervals(config.get('chiming_times')),
+                                   chiming_times=convert_intervals(config('noticeboard', 'chiming_times')),
                                    chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
 
     for on_action in ['shine', 'photo', 'extend']:
-        controller.add_pir_on_action(config['delays'][on_action], on_action)
+        controller.add_pir_on_action(config('noticeboard', 'delays', on_action), on_action)
     for off_action in ['quench', 'retract']:
-        controller.add_pir_off_action(config['delays'][off_action], off_action)
+        controller.add_pir_off_action(config('noticeboard', 'delays', off_action), off_action)
 
     previous_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
-                                convert_intervals(config['chiming_times']),
+                                convert_intervals(config('noticeboard', 'chiming_times')),
                                 previous_date)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as incoming:
         incoming.setblocking(0)
-        incoming.bind(('localhost', int(config['port'])))
+        incoming.bind(('localhost', int(config('noticeboard', 'command_port'))))
         incoming.listen()
 
         print('(message "noticeboard hardware controller started")')
@@ -188,16 +126,16 @@ def main():
         watch_on = [sys.stdin, incoming]
         while running:
             active = controller.step(active)
-            rec_update(config, controller.config_updates)
+            update_config (controller.config_updates)
             controller.config_updates = {}
             # if we're stepping through an activity, ignore commands for now:
             if active:
-                time.sleep(config['delays']['fast'])
+                time.sleep(config('noticeboard', 'delays', 'fast'))
             else:
                 ready, _, _ = select.select(watch_on,
                                             [],
                                             [],
-                                            config['delays']['slow'])
+                                            config('noticeboard', 'delays', 'slow'))
                 for channel in ready:
                     if channel == incoming:
                         conn, new_address = incoming.accept()
@@ -236,9 +174,9 @@ def main():
                 today = datetime.date.today()
                 if previous_date != today:
                     announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
-                                                convert_intervals(config['chiming_times']),
+                                                convert_intervals(config('noticeboard', 'chiming_times')),
                                                 today)
-                    nightly_chores(config)
+                    nightly_chores()
                     previous_date = today
                 announcer.tick()
 

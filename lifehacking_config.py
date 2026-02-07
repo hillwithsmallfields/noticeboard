@@ -25,7 +25,7 @@ def rec_update(basedict, u):
             basedict[k] = v
     return basedict
 
-def load_multiple_yaml(target_dict, yaml_files):
+def load_yaml_files(target_dict, yaml_files):
     """Load several YAML files, merging the data from them."""
     if yaml_files:
         for yaml_file in yaml_files:
@@ -92,7 +92,56 @@ HARDCODED_DEFAULT_CONFIG = {
         'projects-dir': "~/open-projects/github.com",
         'projects-user': "hillwithsmallfields",
         'reflections-dir': os.path.expandvars("$SYNCED/texts/reflection"),
-        'timetables-dir': "$SYNCED/timetables"}}
+        'timetables-dir': "$SYNCED/timetables"},
+
+    'house': {
+        'expected_occupancy': {
+            # default for a 9-5 worker who stays in at weekends
+        'Monday': ["06:00--08:30",
+                   "17:30--23:30"],
+            'Tuesday': ["06:00--08:30",
+                        "17:30--23:30"],
+            'Wednesday': ["06:00--08:30",
+                          "17:30--23:30"],
+            'Thursday': ["06:00--08:30",
+                         "17:30--23:30"],
+            'Friday': ["06:00--08:30",
+                       "17:30--23:30"],
+            'Saturday': ["08:00--23:30"],
+            'Sunday': ["08:00--23:30"]},
+    },
+
+    'motion': {
+        'retain': "8Gb",
+        'days': 31,
+    },
+
+    'org_directory': "$HOME/Sync/org",
+    'archive_directory': "$HOME/Sync-snapshots",
+    'archives_size': "8Gb",
+
+    'noticeboard': {
+        'chiming_times': {
+            'Default': "05:30--22:00",
+            'Saturday': "08:30--22:00",
+            'Sunday': "06:00--22:00",
+        },
+        'pir_log_file': "/var/log/pir",
+        'command_port': 10101,
+        'camera': {
+            'duration': 180,
+            'directory': "/var/spool/camera"},
+        'delays': {
+            'fast': 0.01,
+            'slow': 1.0,
+            'shine': 2,
+            'quench': 10,
+            'photo': 3,
+            'extend': 4,
+            'retract': 15,
+            'step_max': 200},
+    },
+}
 
 def recursive_expand(value):
     return (os.path.expanduser(os.path.expandvars(value))
@@ -116,7 +165,7 @@ def load_config(no_hardcoded_default=False,
         with open(main_config_file) as yaml_stream:
             rec_update(config, yaml.safe_load(yaml_stream))
 
-    load_multiple_yaml(config, config_files)
+    load_yaml_files(config, config_files)
 
     CONFIGURATION = recursive_expand(config)
 
@@ -141,6 +190,9 @@ def config(*keys):
     if not CONFIGURATION:
         load_config()
     return lookup(CONFIGURATION, *keys)
+
+def update_config(incoming):
+    rec_update(CONFIGURATION, incoming)
 
 def file_config(*keys):
     return os.path.expanduser(os.path.expandvars(config(*keys)))

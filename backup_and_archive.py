@@ -7,14 +7,9 @@ import os
 import subprocess
 import time
 
-import lifehacking_config
-
-CONFIGURATION = {}
+from lifehacking_config import config
 
 DVD_FULL = 4700000000
-
-def CONF(*keys):
-    return lifehacking_config.lookup(CONFIGURATION, *keys)
 
 def make_tarball(tarball, of_directory):
     if not os.path.isfile(tarball):
@@ -49,21 +44,21 @@ def get_next_backup_file():
 def backup_to_dvd(synced_snapshots,
                   daily_backup_template, weekly_backup_template):
     """Prepare an ISO image of my latest backups."""
-    backup_isos_directory = os.path.expandvars(CONF('backups', 'backup-isos-directory'))
+    backup_isos_directory = os.path.expandvars(config('backups', 'backup-isos-directory'))
     if backup_isos_directory == "":
         backup_isos_directory = os.path.expandvars("$HOME/isos")
     os.makedirs(backup_isos_directory, exist_ok=True)
     monthly_backup_name = os.path.join(
         backup_isos_directory,
-        CONF('backups', 'backup-iso-format') % datetime.date.today().isoformat())
+        config('backups', 'backup-iso-format') % datetime.date.today().isoformat())
     # this assumes it's a different filename each time:
     if os.path.isfile(monthly_backup_name):
         print("Backup file", monthly_backup_name, "already exists")
     else:
         # make_tarball("/tmp/music.tgz", os.path.expandvars("$HOME/Music"))
         make_tarball("/tmp/github.tgz",
-                     os.path.join(CONF('backups', 'projects-dir'),
-                                  CONF('backups', 'projects-user')))
+                     os.path.join(config('backups', 'projects-dir'),
+                                  config('backups', 'projects-user')))
         files_to_backup = [
             latest_file_matching(os.path.join(synced_snapshots, daily_backup_template % "*")),
             latest_file_matching(os.path.join(synced_snapshots, weekly_backup_template % "*")),
@@ -72,7 +67,7 @@ def backup_to_dvd(synced_snapshots,
             "/tmp/github.tgz"]
         # prepare a backup of my encrypted partition, if mounted
         if os.path.isdir(os.path.expandvars("/mnt/crypted/$USER")):
-            os.system("backup-confidential " + CONF('backups', 'gpg-recipient'))
+            os.system("backup-confidential " + config('backups', 'gpg-recipient'))
         # look for the output of https://github.com/hillwithsmallfields/JCGS-scripts/blob/master/backup-confidential
         confidential_backup = latest_file_matching("/tmp/personal-*.tgz.gpg")
         if confidential_backup:
@@ -114,18 +109,16 @@ def backup_to_dvd(synced_snapshots,
 
 def backup_and_archive(force=False):
     """Take backups, and make an archive, if today is one of the specified days."""
-    global CONFIGURATION
-    CONFIGURATION = lifehacking_config.load_config()
-    synced_snapshots = CONF('backups', 'synced-snapshots')
+    synced_snapshots = config('backups', 'synced-snapshots')
     if synced_snapshots == "" or synced_snapshots.startswith("$"):
         synced_snapshots = os.path.expandvars("$HOME/Sync-snapshots")
-    daily_backup_template = CONF('backups', 'daily-backup-template')
-    weekly_backup_template = CONF('backups', 'weekly-backup-template')
+    daily_backup_template = config('backups', 'daily-backup-template')
+    weekly_backup_template = config('backups', 'weekly-backup-template')
     today = datetime.date.today()
     synced = os.path.expandvars("$SYNCED")
     make_tarball(os.path.join(synced_snapshots, daily_backup_template % today.isoformat()),
                  os.path.join(synced, "org"))
-    weekly_backup_day = CONF('backups', 'weekly-backup-day')
+    weekly_backup_day = config('backups', 'weekly-backup-day')
     if not isinstance(weekly_backup_day, int):
         try:
             weekly_backup_day = time.strptime(weekly_backup_day, "%A").tm_wday
@@ -134,12 +127,12 @@ def backup_and_archive(force=False):
     if force or today.weekday() == weekly_backup_day:
         make_tarball(os.path.join(synced_snapshots, weekly_backup_template % today.isoformat()),
                      synced)
-    if force or today.day == int(CONF('backups', 'monthly-backup-day')):
+    if force or today.day == int(config('backups', 'monthly-backup-day')):
         if 'ISOS' not in os.environ:
             os.environ['ISOS'] = os.path.expandvars("$HOME/isos")
         iso = backup_to_dvd(synced_snapshots, daily_backup_template, weekly_backup_template)
-        print("backup writing flag is", CONF('backups', 'write-iso-to-dvd'))
-        if CONF('backups', 'write-iso-to-dvd'):
+        print("backup writing flag is", config('backups', 'write-iso-to-dvd'))
+        if config('backups', 'write-iso-to-dvd'):
             write_iso_to_dvd(iso)
 
 def main():

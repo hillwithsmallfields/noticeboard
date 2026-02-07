@@ -73,3 +73,41 @@ general:
         projects-dir: ~/open-projects/github.com
         projects-user: hillwithsmallfields
         reflections-dir: $SYNCED/texts/reflection
+noticeboard:
+        chiming_times:
+                Default: 06:30--22:00
+                Saturday: 09:30--22:00
+                Sunday: 05:30--22:00
+        command_port: 10101
+        camera:
+                directory: /var/spool/camera
+                duration: 180
+        delays:
+              activation: 2.0
+              lamp: 0.01
+              main_loop: 1.0
+              motor: 0.01
+        pir_log_file: /var/log/pir
+house:
+        expected_occupancy:
+                 Friday:
+                 - 06:00--08:30
+                 - 17:30--23:30
+                 Monday:
+                 - 06:00--08:30
+                 - 17:30--20:00
+                 - 22:00--23:30
+                 Saturday:
+                 - 06:00--23:30
+                 Sunday:
+                 - 06:00--08:30
+                 - 17:30--23:30
+                 Thursday:
+                 - 06:00--08:30
+                 - 17:30--23:30
+                 Tuesday:
+                 - 06:00--08:30
+                 - 17:30--23:30
+                 Wednesday:
+                 - 06:00--08:30
+                 - 17:30--23:30
