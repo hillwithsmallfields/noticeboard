@@ -20,8 +20,7 @@ from timetable_announcer import announce
 from noticeboardhardware import NoticeBoardHardware
 from lifehacking_config import config, update_config
 import archive
-import managed_directory
-import motion
+from motion_monitor import managed_directory, motion
 
 camera = None
 
