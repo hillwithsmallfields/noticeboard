@@ -1,16 +1,5 @@
 cssutils
-frozendict
-inotify
-matplotlib
-numpy
-pandas
-pyowm
-pystemmer
 pyyaml
 requests
-coimealta
-dobishem
-expressionive
-orgbookchapterverse
-tabular_page_maker
+prefixed
 timetable_announcer

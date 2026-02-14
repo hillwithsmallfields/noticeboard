@@ -19,8 +19,7 @@ import pins
 from lamp import Lamp
 
 from lifehacking_config import config
-import managed_directory
-import motion
+from motion_monitor import managed_directory
 
 # General support for the noticeboard hardware
 
