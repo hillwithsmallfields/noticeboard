@@ -4,9 +4,8 @@ inotify
 matplotlib
 numpy
 pandas
-prefixed
-psutil
 pyowm
+pystemmer
 pyyaml
 requests
 coimealta
@@ -15,4 +14,3 @@ expressionive
 orgbookchapterverse
 tabular_page_maker
 timetable_announcer
-
