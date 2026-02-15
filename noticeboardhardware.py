@@ -19,7 +19,7 @@ import pins
 from lamp import Lamp
 
 from lifehacking_config import config
-from motion_monitor import managed_directory
+from motion_monitor import motion_monitor, managed_directory
 
 # General support for the noticeboard hardware
 
@@ -202,23 +202,24 @@ class NoticeBoardHardware(cmd.Cmd):
         print('(message "Speech process: %s")' % self.speech_process)
         print('(message "Countdown to switching speaker off: %d")' % self.speaker_off_countdown)
         print('(message "Time on server: %s")' % datetime.datetime.now().isoformat())
-        clips_dir = motion.get_clips_directory()
+        clips_dir = motion_monitor.get_clips_directory()
         if os.path.isdir(clips_dir):
             print('(message "Camera clips: %d bytes")' % int(subprocess.run(["du", "-b", clips_dir], capture_output=True)
                                                              .stdout
                                                              .split(b'\t')[0]))
-            clips = sorted(n[13:] for n in os.listdir(clips_dir))
+            clips = sorted(managed_directory.get_files_details(clips_dir),
+                           key=lambda f: f['created'])
             if clips:
-                print('(message "Most recent camera clip at: %s")' % clips[-1].split('.')[0])
+                print('(message "Most recent camera clip at: %s")' % clips[-1]['created'])
         return False
 
     def do_trim(self, arg):
         """Trim the camera clips directory."""
-        managed_directory.trim_directory(motion.get_clips_directory(), int(arg) if arg else DIRECTORY_MAX_SIZE)
+        managed_directory.trim_directory(motion_monitor.get_clips_directory(), int(arg) if arg else DIRECTORY_MAX_SIZE)
 
     def do_keep(self, arg):
         """Keep only a given number of days of camera clips."""
-        managed_directory.keep_days_in_directory(motion.get_clips_directory(), int(arg) if arg else DIRECTORY_MAX_SIZE)
+        managed_directory.keep_days_in_directory(motion_monitor.get_clips_directory(), int(arg) if arg else DIRECTORY_MAX_SIZE)
 
     def do_queue(self, arg):
         """Show the scheduler queue."""
