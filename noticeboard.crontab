@@ -1,4 +1,5 @@
 # run my daily tasks, well before the earliest I'm likely to be up,
 # but on the right day, and not excessively early (to get the weather
 # fairly soon before the day):
-0 4 * * * /mnt/hdd0/home/jcgs/open-projects/github/hillwithsmallfields/noticeboard/chores
+0 3 * * * /mnt/hdd0/home/jcgs/open-projects/github/hillwithsmallfields/noticeboard/chores --auto
+
