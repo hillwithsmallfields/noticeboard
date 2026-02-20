@@ -203,8 +203,13 @@ def override(config, keys, value):
     config[keys[-1]] = value
 
 def config(*keys):
+    """Look up a configuration setting.
+    A hierarchical specification may be given as multiple string arguments,
+    or as a single string argument with levels separated by ':' characters."""
     if not CONFIGURATION:
         load_config()
+    if len(keys) == 1 and ':' in keys[0]:
+        keys = keys[0].split(':')
     return lookup(CONFIGURATION, *keys)
 
 def update_config(incoming):
