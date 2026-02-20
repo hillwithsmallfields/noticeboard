@@ -82,7 +82,8 @@ def chores(charts_dir,
     if monthly:
         monthly_chores()
 
-    subprocess.run([os.path.join(MY_PROJECTS, "qs", "update", "update")])
+    if not no_updates:
+        subprocess.run([os.path.join(MY_PROJECTS, "qs", "update", "update")])
 
     # TODO: recursive listing of directories, or tar and md5sum them, to detect damage
 
