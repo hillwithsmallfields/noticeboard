@@ -96,6 +96,7 @@ def main():
         controller.add_pir_off_action(config('noticeboard', 'delays', off_action), off_action)
 
     previous_date = datetime.date.today()
+    previous_chores_date = datetime.date.today()
     announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
                                 convert_intervals(config('noticeboard', 'chiming_times')),
                                 previous_date)
@@ -158,10 +159,13 @@ def main():
                             watch_on.remove(channel)
                 today = datetime.date.today()
                 if previous_date != today:
+                    controller.start_chores()
                     announcer.reload_timetables(os.path.expandvars("$SYNCED/timetables"),
                                                 convert_intervals(config('noticeboard', 'chiming_times')),
                                                 today)
                     previous_date = today
+                if previous_chores_date != controller.chores_done_date:
+                    previous_chores_date = controller.chores_done_date
                 announcer.tick()
 
         controller.onecmd("quiet")

@@ -6,6 +6,7 @@ import os
 import re
 import sched
 import shlex
+import signal
 import subprocess
 import sys
 import time
@@ -25,6 +26,8 @@ from motion_monitor import motion_monitor, managed_directory
 
 # see https://forums.raspberrypi.com/viewtopic.php?t=278003 for driving the lamps
 # see https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20 for the temperature sensor
+
+KIOSK_EMACS_PID_FILE = os.path.expanduser("~/.agenda-kiosk-emacs")
 
 COUNTDOWN_START = 3
 DIRECTORY_MAX_SIZE = 8 * 1024 * 1024 * 1024
@@ -96,6 +99,9 @@ class NoticeBoardHardware(cmd.Cmd):
         self.music_process = None
         self.speech_process = None
         self.speaker_off_countdown = COUNTDOWN_START
+
+        self.chores_process = None
+        self.chores_done_date = None
 
         self.user_status_automatic = False
         self.user_status = 'unknown'
@@ -446,6 +452,30 @@ class NoticeBoardHardware(cmd.Cmd):
                     self.log("switching speaker off at %s" % datetime.datetime.now().isoformat())
                     self.sound(False)
 
+    def start_chores(self):
+        """Start a chores process."""
+        if self.chores_process) or self.chores_process.poll() is None:
+            self.log("Chores process already running.")
+        try:
+            self.log("Starting chores process")
+            self.chores_process = subprocess.Popen([os.path.join(os.path.dirname(__file__), "chores.py"),
+                                                    ],
+                                                   stdout=subprocess.DEVNULL,
+                                                   stderr=subprocess.DEVNULL)
+        except Exception as e:
+            self.log("Problem %s in starting chores process" % e)
+
+    def check_for_chores_finishing(self):
+        """Check for the chores finishing, and do any resulting actions."""
+        if self.chores_process and self.chores_process.poll() is not None:
+            self.log("Chores process finished")
+            self.chores_process = None
+            self.chores_done_date = datetime.date.today()
+            if os.path.exists(KIOSK_EMACS_PID_FILE):
+                with open(KIOSK_EMACS_PID_FILE) as pidstream:
+                    os.kill(int(pidstream.read()),
+                            signal.SIGUSR1)
+
     def step(self, active):
         """Perform one step of any active operations.
         Returns whether there's anything going on that needs
@@ -465,6 +495,7 @@ class NoticeBoardHardware(cmd.Cmd):
             self.check_for_sounds_finishing()
             self.check_temperature()
             self.check_pir()
+            self.check_for_chores_finishing()
 
         return (self.keyboard_status in ('retracting', 'extending')
                 # or self.music_process
