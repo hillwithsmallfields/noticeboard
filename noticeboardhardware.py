@@ -73,6 +73,12 @@ def filenames_for_music(partial_filename):
         print("music files matching", partial_filename, "are:", possibles)
         return list(possibles)[0]
 
+def signal_emacs(signal):
+    if os.path.exists(KIOSK_EMACS_PID_FILE):
+        with open(KIOSK_EMACS_PID_FILE) as pidstream:
+            os.kill(int(pidstream.read()),
+                    signal)
+
 class NoticeBoardHardware(cmd.Cmd):
 
     pass
@@ -457,6 +463,11 @@ class NoticeBoardHardware(cmd.Cmd):
         if self.chores_process or self.chores_process.poll() is None:
             self.log("Chores process already running.")
         try:
+            # Tell emacs to save its buffers, and give it a bit of
+            # time to do so (in case we want to modify something that
+            # is being modified by the user):
+            signal_emacs(signal.SIGUSR1)
+            time.sleep(6)
             self.log("Starting chores process")
             self.chores_process = subprocess.Popen([os.path.join(os.path.dirname(__file__), "chores.py"),
                                                     ],
@@ -471,10 +482,7 @@ class NoticeBoardHardware(cmd.Cmd):
             self.log("Chores process finished")
             self.chores_process = None
             self.chores_done_date = datetime.date.today()
-            if os.path.exists(KIOSK_EMACS_PID_FILE):
-                with open(KIOSK_EMACS_PID_FILE) as pidstream:
-                    os.kill(int(pidstream.read()),
-                            signal.SIGUSR1)
+            signal_emacs(signal.SIGUSR2)
 
     def step(self, active):
         """Perform one step of any active operations.
