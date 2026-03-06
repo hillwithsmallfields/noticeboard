@@ -460,7 +460,7 @@ class NoticeBoardHardware(cmd.Cmd):
 
     def start_chores(self):
         """Start a chores process."""
-        if self.chores_process or self.chores_process.poll() is None:
+        if self.chores_process and self.chores_process.poll() is None:
             self.log("Chores process already running.")
         try:
             # Tell emacs to save its buffers, and give it a bit of
