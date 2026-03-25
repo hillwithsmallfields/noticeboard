@@ -467,7 +467,7 @@ class NoticeBoardHardware(cmd.Cmd):
             # time to do so (in case we want to modify something that
             # is being modified by the user):
             signal_emacs(signal.SIGUSR1)
-            time.sleep(6)
+            time.sleep(60)
             self.log("Starting chores process")
             self.chores_process = subprocess.Popen([os.path.join(os.path.dirname(__file__), "chores.py"),
                                                     ],
@@ -488,7 +488,6 @@ class NoticeBoardHardware(cmd.Cmd):
         """Perform one step of any active operations.
         Returns whether there's anything going on that needs
         the event loop to run fast."""
-
         for lamp in self._lamps:
             lamp.step()
 
