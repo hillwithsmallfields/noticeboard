@@ -3,3 +3,4 @@ pyyaml
 requests
 prefixed
 timetable_announcer
+motion_monitor
