@@ -1,5 +1,10 @@
 #!/bin/bash
 
-source noticeboard.env/bin/activate
+export STOP_NOTICEBOARD_FILE=/tmp/stop-noticeboard
 
-./noticeboard.py $*
+source noticeboard.env/bin/activate
+while [ ! -f $STOP_NOTICEBOARD_FILE ]
+do
+    ./noticeboard.py $*
+done
+rm -f $STOP_NOTICEBOARD_FILE
