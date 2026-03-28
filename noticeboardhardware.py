@@ -14,7 +14,7 @@ import time
 from collections import defaultdict
 
 import RPi.GPIO as GPIO
-import picamera
+import picamera2
 
 import pins
 from lamp import Lamp
@@ -135,7 +135,7 @@ class NoticeBoardHardware(cmd.Cmd):
         GPIO.setup(pins.PIN_LAMP_LEFT, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(pins.PIN_LAMP_RIGHT, GPIO.OUT, initial=GPIO.LOW)
         self._lamps = [Lamp(pins.PIN_LAMP_LEFT), Lamp(pins.PIN_LAMP_RIGHT)]
-        self.camera = picamera.PiCamera()
+        self.camera = picamera2.Picamera2()
 
     def log(self, message, *message_data):
         log_text = datetime.datetime.now().isoformat() + ": " + (message % message_data)
