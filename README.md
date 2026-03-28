@@ -8,8 +8,11 @@ The noticeboard also has a keyboard on a motorized sliding shelf, a
 PIR detector, a couple of LED halogen-replacement bulbs, and a Picam.
 
 The 12V PSU for the screen and the keyboard motor can be switched on
-and off by a solid-state relay controlled from the Pi.
+and off by a solid-state relay controlled from the Pi, as can an
+external active speaker used for the clock chimes.
 
 The program can take commands on its standard input, and is intended
-to be commanded by Emacs.  However, it must have access to the GPIO
-pins.
+to be commanded by Emacs.
+
+It must have access to the GPIO pins, typically done by putting the
+user into the gpio group.
