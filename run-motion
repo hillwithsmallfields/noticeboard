@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# get the config directly from my repo tree, to avoid having to install it:
+MOTION_CONFIG=$MY_PROJECTS/JCGS-config/motion/motion.conf
+motion -c $MOTION_CONFIG
