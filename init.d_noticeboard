@@ -1,0 +1,60 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:          noticeboard
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Should-Start:      $named autofs
+# Default-Start:     2 3 4 5
+# Default-Stop:      
+# Short-Description: noticeboard hardware controller
+# Description:       The noticeboard system looks after the lights,
+#                    clock chimes, etc, and starting chores.
+### END INIT INFO
+
+set -e
+
+# /etc/init.d/rsync: start and stop the noticeboard code
+
+DAEMON=/home/jcgs/open-projects/github.com/hillwithsmallfields/noticeboard/noticeboard
+export STOP_NOTICEBOARD_FILE=/tmp/stop-noticeboard
+export NOTICEBOARD_PID_FILE=/tmp/noticeboard-pid
+
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+noticeboard_start() {
+    runuser -u jcgs $DAEMON &
+} # noticeboard_start
+
+noticeboard_kill() {
+    kill $(cat $NOTICEBOARD_PID_FILE)
+}
+
+case "$1" in
+    start)
+        noticeboard_start
+	;;
+    stop)
+        touch $STOP_NOTICEBOARD_FILE
+        noticeboard_kill
+	;;
+
+    reload|force-reload)
+        noticeboard_kill
+	;;
+
+  restart)
+      noticeboard_kill
+	;;
+
+  status)
+      ps ax | grep noticeboard
+	;;
+  *)
+	echo "Usage: /etc/init.d/rsync {start|stop|reload|force-reload|restart|status}"
+	exit 1
+esac
+
+exit 0
