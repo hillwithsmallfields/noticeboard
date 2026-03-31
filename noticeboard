@@ -4,13 +4,15 @@ export STOP_NOTICEBOARD_FILE=/tmp/stop-noticeboard
 export NOTICEBOARD_PID_FILE=/tmp/noticeboard-pid
 echo $$ > $NOTICEBOARD_PID_FILE
 
+NB_LOG=/tmp/noticeboard.log
+
 NB_DIR=/home/jcgs/open-projects/github.com/hillwithsmallfields/noticeboard
 
 source $NB_DIR/noticeboard.env/bin/activate
 
 while [ ! -f $STOP_NOTICEBOARD_FILE ]
 do
-    $NB_DIR/noticeboard.py $*
+    $NB_DIR/noticeboard.py $* >$NB_LOG 2>&1
 done
 
 rm -f $STOP_NOTICEBOARD_FILE $NOTICEBOARD_PID_FILE
