@@ -12,7 +12,8 @@ source $NB_DIR/noticeboard.env/bin/activate
 
 while [ ! -f $STOP_NOTICEBOARD_FILE ]
 do
-    $NB_DIR/noticeboard.py $* >$NB_LOG 2>&1
+    # $NB_DIR/noticeboard.py $* >$NB_LOG 2>&1
+    $NB_DIR/experiment.py $* >$NB_LOG 2>&1
 done
 
 rm -f $STOP_NOTICEBOARD_FILE $NOTICEBOARD_PID_FILE
