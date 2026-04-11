@@ -14,7 +14,7 @@
 
 set -e
 
-# /etc/init.d/rsync: start and stop the noticeboard code
+# /etc/init.d/noticeboard: start and stop the noticeboard code
 
 DAEMON=/home/jcgs/open-projects/github.com/hillwithsmallfields/noticeboard/noticeboard
 export STOP_NOTICEBOARD_FILE=/tmp/stop-noticeboard
