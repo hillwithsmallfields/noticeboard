@@ -99,9 +99,16 @@ def main():
                                    chiming_times=convert_intervals(config('noticeboard', 'chiming_times')),
                                    chimes_dir=os.path.expandvars("$SYNCED/music/chimes"))
 
-    for on_action in ['shine', 'photo', 'extend']:
+    for on_action in [
+            'shine',
+            # 'photo',
+            'extend',
+    ]:
         controller.add_pir_on_action(config('noticeboard', 'delays', on_action), on_action)
-    for off_action in ['quench', 'retract']:
+    for off_action in [
+            'quench',
+            'retract',
+    ]:
         controller.add_pir_off_action(config('noticeboard', 'delays', off_action), off_action)
 
     previous_date = datetime.date.today()
