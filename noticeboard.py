@@ -102,12 +102,12 @@ def main():
     for on_action in [
             'shine',
             # 'photo',
-            'extend',
+            # 'extend',
     ]:
         controller.add_pir_on_action(config('noticeboard', 'delays', on_action), on_action)
     for off_action in [
             'quench',
-            'retract',
+            # 'retract',
     ]:
         controller.add_pir_off_action(config('noticeboard', 'delays', off_action), off_action)
 
